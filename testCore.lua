@@ -19,7 +19,7 @@ assert(choosePhrase(math.random) ~= nil)
 function noRandomMin(min, max)
     return min
 end
-assert(calculateNewFoodSicknessLevel(0, 1, noRandomMin) == LACTOSE_ITEM_SICKNESS_BASE + NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
+assert(calculateNewFoodSicknessLevel(0, 1, noRandomMin) == LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
 
 function getName(self)
     return self.name
@@ -51,7 +51,7 @@ ZombRand = function(min, max)
     return min
 end
 newValue = calculateNewFoodSicknessLevelList(testItemList, 1, 0)
-assert(newValue == LACTOSE_ITEM_SICKNESS_BASE + NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
+assert(newValue == LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
 
 item3 = testItem:create("cheese2")
 
@@ -61,4 +61,4 @@ testItemListTwoIngredients = {
     item3,
 }
 newValue = calculateNewFoodSicknessLevelList(testItemListTwoIngredients, 1, 0)
-assert(newValue == (LACTOSE_ITEM_SICKNESS_BASE + NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)*2)
+assert(newValue == (LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)*2)

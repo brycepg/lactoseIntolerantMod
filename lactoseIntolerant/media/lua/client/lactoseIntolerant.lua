@@ -26,6 +26,7 @@ end
 
 
 function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
+        print("Testing out the print function wubba lubba dub dub")
         old_eatmenu(item, percentage, player)
         local playerObj = getPlayer(player)
         if not playerObj:HasTrait("lactoseIntolerant") then
@@ -33,42 +34,45 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
-        -- Test Out ExtraItems with stir fry
-        -- I'm going to check each item in a meal to see if it contains a cheese item
-        -- Count the amount of foods with cheese in them
+        local sayPhrase = false
+
         local bodyDamage = playerObj:getBodyDamage()
         local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
+
         local haveExtraItems = item:haveExtraItems()
-        local sayPhrase = false
+
         if haveExtraItems then
+
             local extraItems = item:getExtraItems()
             local itemArray = zombListToLuaArray(extraItems)
             newSicknessLevel = calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
             bodyDamage:setFoodSicknessLevel(newSicknessLevel);
             sayPhrase = true
         else
+
+            itemName = item:getName()
+            playerObj:Say("Eating: " .. itemName)
+
+            if foodContainsLactose(itemName) then
+                -- lets refactor this so I can use it for get extraItems
+                 local newSicknessLevel = calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
+                 bodyDamage:setFoodSicknessLevel(newSicknessLevel);
+                 sayPhrase = true
+             end
         end
-        itemName = item:getName()
-        food_contains_lactose = foodContainsLactose(itemName)
-        playerObj:Say("Eating: " .. itemName)
-        if food_contains_lactose then
-            -- lets refactor this so I can use it for get extraItems
-             local bodyDamage = playerObj:getBodyDamage()
-             local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-             local newSicknessLevel = calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
-             bodyDamage:setFoodSicknessLevel(newSicknessLevel);
-             sayPhrase = true
-         end
 
          if sayPhrase then
+
              -- allow disabling of phrase
              local phrase_info_table = {}
              phrase_info_table.age = tostring(playerObj:getAge())
              phrase_info_table.name = playerObj:getName()
              phrase_info_table.item = itemName
-             print("phrase_info_table: " .. tostring(phrase_info_table))
+
+             playerObj:Say("phrase_info_table: " .. tostring(phrase_info_table))
              local phrase = choosePhraseWithInterp(phrase_info_table)
-             print("say phrases: " .. tostring(SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption))
+             playerObj:Say("say phrases: " .. tostring(SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption))
+
              if phrase then
                 playerObj:Say(phrase)
             end
