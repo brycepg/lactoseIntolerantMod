@@ -1,5 +1,11 @@
 require 'lactoseIntolerantCore'
 
+-- How do I get the code to run ONLY if the eating action is completed?
+-- | Is partial eating a thing?
+-- | Modify event or action?
+
+
+--
 -- DONE: Add nasuea for foods with cheese in it such as a stirfry with cheese
     -- What functions describe the contents of an edible item? getExtraItems
 -- playtest out stir fry nasua
