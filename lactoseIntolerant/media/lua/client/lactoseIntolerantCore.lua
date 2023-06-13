@@ -129,3 +129,14 @@ function foodContainsLactose(itemName)
     end
     return food_with_lactose_match
 end
+
+
+function zombListToLuaArray(zombList)
+    itemArray = {}
+    for j = 0, zombList:size()-1 do
+        itemArray = zombList:get(j)
+    end
+    return itemArray
+end
+
+
