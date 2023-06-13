@@ -16,15 +16,6 @@ local old_eatmenu = ISInventoryPaneContextMenu.eatItem
 local lactoseIntolerantOverrideSet = false
 
 
-function choosePhraseWithInterp(info_table)
-  local chosenPhrase = choosePhrase(ZombRand)
-  if chosenPhrase then
-      return lactoseIntolerantInterp(chosenPhrase, info_table)
-  end
-  return ""
-end
-
-
 function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
         print("Testing out the print function wubba lubba dub dub")
         old_eatmenu(item, percentage, player)

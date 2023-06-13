@@ -62,3 +62,5 @@ testItemListTwoIngredients = {
 }
 newValue = calculateNewFoodSicknessLevelList(testItemListTwoIngredients, 1, 0)
 assert(newValue == (LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)*2)
+
+-- todo test interpolated phrases

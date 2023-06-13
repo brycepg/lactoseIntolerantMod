@@ -18,6 +18,11 @@ local NO_PHRASE_CHANCE = 20
 
 -- for testing
 if not ZombRand and LactoseIntolerant.DEBUG then
+    function setZombRand(value)
+        ZombRand = function(min, max)
+            return value
+        end
+    end
     print("ZombRand is not defined.. defining for testing")
     ZombRand = function(min, max)
         math.random(min, max)
@@ -25,6 +30,7 @@ if not ZombRand and LactoseIntolerant.DEBUG then
 end
 
 
+-- add to the bottom or edit tests
 lactoseIntolerantPhrases = {
     "This food is making my tummy all rumbly",
     "Uhh didn't you know i'm lactose intolerant?",
@@ -36,6 +42,15 @@ lactoseIntolerantPhrases = {
     "I'm gonna be shaking off farts for the next hour",
     "It's not just any cow.. it's a dairy cow",
 }
+
+
+function choosePhraseWithInterp(info_table)
+  local chosenPhrase = choosePhrase(ZombRand)
+  if chosenPhrase then
+      return lactoseIntolerantInterp(chosenPhrase, info_table)
+  end
+  return ""
+end
 
 
 function choosePhrase(randfunc)
