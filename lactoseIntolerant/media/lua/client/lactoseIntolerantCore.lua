@@ -1,23 +1,23 @@
---  TODO: create table for all these functions
---  named: "LactoseIntolerant" table?
-
-LactoseIntolerant = {}
-LactoseIntolerant.DEBUG = true
+-- file contains core code which doesn't depend on the
+-- zomboid API
+--
+-- table namespace like they do it in zomboid lua
+lactoseIntolerant = {}
+lactoseIntolerant.DEBUG = true
 
 -- possible sickness delta is (BASE-MIN to BASE+MAX-1)
-LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE = 30
-LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA = 0
-LactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA = 20
+lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE = 30
+lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA = 0
+lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA = 20
 
--- testable code without references to zomboid API
-LactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake"}
+lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake"}
 -- If the item name matches with the above substrings, except it if it matches any of the below substrings
-local NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese"}
+lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese"}
 -- Chance that a player will not say anything when eating lactose
-local NO_PHRASE_CHANCE = 20
+lactoseIntolerant.NO_PHRASE_CHANCE = 20
 
 -- for testing
-if not ZombRand and LactoseIntolerant.DEBUG then
+if not ZombRand and lactoseIntolerant.DEBUG then
     function setZombRand(value)
         ZombRand = function(min, max)
             return value
@@ -31,7 +31,7 @@ end
 
 
 -- add to the bottom or edit tests
-lactoseIntolerantPhrases = {
+lactoseIntolerant.phrases = {
     "This food is making my tummy all rumbly",
     "Uhh didn't you know i'm lactose intolerant?",
     "...",
@@ -44,43 +44,44 @@ lactoseIntolerantPhrases = {
 }
 
 
-function choosePhraseWithInterp(info_table)
-  local chosenPhrase = choosePhrase(ZombRand)
+function lactoseIntolerant.choosePhrase(randfunc)
+    -- choose phrase for player to say
+    if randfunc(0, 99) < lactoseIntolerant.NO_PHRASE_CHANCE then
+        return ""
+    end
+    local index = randfunc(0, #lactoseIntolerant.phrases)
+    if lactoseIntolerant.DEBUG then
+        print("chosen index: " .. tostring(index))
+    end
+    local chosenPhrase = lactoseIntolerant.phrases[index]
+    return chosenPhrase
+end
+
+
+function lactoseIntolerant.choosePhraseWithInterp(info_table)
+  local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
   if chosenPhrase then
-      return lactoseIntolerantInterp(chosenPhrase, info_table)
+      return lactoseIntolerant.Interp(chosenPhrase, info_table)
   end
   return ""
 end
 
 
-function choosePhrase(randfunc)
-    -- choose phrase for player to say
-    if randfunc(0, 99) < NO_PHRASE_CHANCE then
-        return ""
-    end
-    local index = randfunc(0, #lactoseIntolerantPhrases)
-    if LactoseIntolerant.DEBUG then
-        print("chosen index: " .. tostring(index))
-    end
-    local chosenPhrase = lactoseIntolerantPhrases[index]
-    return chosenPhrase
-end
-
-
-function calculateNewFoodSicknessLevelList(itemList, percentage, oldFoodSicknessLevel)
-    -- itemList is an array
-    -- percentage is a float from 0 to 1 noting the
-    -- percentage of the food eaten
+function lactoseIntolerant.calculateNewFoodSicknessLevelList(itemList, percentage, oldFoodSicknessLevel)
+    -- calculate new food sickness level for multiple items
+    -- itemList(array): an array of InventoryItem objects
+    -- percentage(int/float): percentage of the item eaten
+    -- oldFoodSicknessLevel(int/float): baseline sickness before itemList was eaten
     local curFoodSicknessLevel = oldFoodSicknessLevel
 
     -- zero indexed list because of java?
     for _, extraItem in ipairs(itemList) do
         local itemName = extraItem:getName()
-        local food_contains_lactose = foodContainsLactose(itemName)
+        local food_contains_lactose = lactoseIntolerant.foodContainsLactose(itemName)
         if food_contains_lactose then
             oldFoodSicknessLevel = curFoodSicknessLevel
-            curFoodSicknessLevel = calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
-            if LactoseIntolerant.DEBUG then
+            curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
+            if lactoseIntolerant.DEBUG then
                 print(tostring(oldFoodSicknessLevel) .. " -> " .. tostring(curFoodSicknessLevel))
             end
          end
@@ -89,7 +90,7 @@ function calculateNewFoodSicknessLevelList(itemList, percentage, oldFoodSickness
 end
 
 
-function calculateNewFoodSicknessLevel(currentFoodSicknessLevel, itemPercentage, randfunc)
+function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLevel, itemPercentage, randfunc)
     -- Calculate new food sickness item for eating a food with lactose
     -- itemPercentage: percentage of the item used
     -- make the random function an argument to remove zomboid only function
@@ -100,23 +101,26 @@ function calculateNewFoodSicknessLevel(currentFoodSicknessLevel, itemPercentage,
     if currentFoodSicknessLevel > 50 then
         multiplier = multiplier * 0.5
     end
-    local _rand_extra = randfunc(LactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA, LactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA)
-    local sicknessDeltaBase = LactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + _rand_extra
+    local _rand_extra = randfunc(lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA, lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA)
+    local sicknessDeltaBase = lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + _rand_extra
     local sicknessDelta = (sicknessDeltaBase * itemPercentage) * multiplier
     local newSicknessLevel = currentFoodSicknessLevel + sicknessDelta
     return newSicknessLevel
 end
 
 
-function lactoseIntolerantInterp(s, tab)
+function lactoseIntolerant.Interp(s, tab)
     -- interpolation for characters with variable dollar sign braces interpolation
+    -- example: lactoseIntolerant.Interp("a: ${foo}", {foo="bar"}) == "a: bar"
+    -- s(string): string with possible interpolates
+    -- tab(table): a table of possible interpolation key values
     return (s:gsub('($%b{})', function(w) return tab[w:sub(3, -2)] or w end))
 end
 
 
 local function _foodContainsNonLactoseKeywords(itemName)
-    for i = 1, #NON_LACTOSE_KEYWORDS do
-        match = string.find(itemName, NON_LACTOSE_KEYWORDS[i])
+    for i = 1, #lactoseIntolerant.NON_LACTOSE_KEYWORDS do
+        match = string.find(itemName, lactoseIntolerant.NON_LACTOSE_KEYWORDS[i])
         if match ~= nil then
             return true
         end
@@ -125,13 +129,13 @@ local function _foodContainsNonLactoseKeywords(itemName)
 end
 
 
-function foodContainsLactose(itemName)
+function lactoseIntolerant.foodContainsLactose(itemName)
     -- Check whether a food contains lactose based on its name
     -- return bool
     local food_name = string.lower(itemName)
     local food_with_lactose_match = false
-    for i = 1, #LactoseIntolerant.FOODS_WITH_LACTOSE do
-        match = string.find(food_name, LactoseIntolerant.FOODS_WITH_LACTOSE[i])
+    for i = 1, #lactoseIntolerant.FOODS_WITH_LACTOSE do
+        match = string.find(food_name, lactoseIntolerant.FOODS_WITH_LACTOSE[i])
         if match ~= nil then
             food_with_lactose_match = true
             break
@@ -147,7 +151,7 @@ function foodContainsLactose(itemName)
 end
 
 
-function zombListToLuaArray(zombList)
+function lactoseIntolerant.zombListToLuaArray(zombList)
     -- convert project zomboid java array object to a native lua array
     itemArray = {}
     for j = 0, zombList:size()-1 do

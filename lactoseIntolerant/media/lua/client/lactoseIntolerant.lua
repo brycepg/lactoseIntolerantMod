@@ -34,9 +34,17 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
 
         if haveExtraItems then
 
+            -- TODO: foodSicknessDecider class
+            -- for both single and multiple items items
+            -- knows whether to say phrase or not
+            -- pro: encapulate food sickness calculations
+            -- pro: encapulate sending phrase message state
+            -- pro: more testable
+            -- con: extra code, have to change working code
+            -- con: disposable class creation every single time
             local extraItems = item:getExtraItems()
-            local itemArray = zombListToLuaArray(extraItems)
-            newSicknessLevel = calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
+            local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
+            newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
             bodyDamage:setFoodSicknessLevel(newSicknessLevel);
             sayPhrase = true
         else
@@ -44,9 +52,9 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
             itemName = item:getName()
             playerObj:Say("Eating: " .. itemName)
 
-            if foodContainsLactose(itemName) then
+            if lactoseIntolerant.foodContainsLactose(itemName) then
                 -- lets refactor this so I can use it for get extraItems
-                 local newSicknessLevel = calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
+                 local newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
                  bodyDamage:setFoodSicknessLevel(newSicknessLevel);
                  sayPhrase = true
              end
@@ -61,7 +69,7 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
              phrase_info_table.item = itemName
 
              playerObj:Say("phrase_info_table: " .. tostring(phrase_info_table))
-             local phrase = choosePhraseWithInterp(phrase_info_table)
+             local phrase = lactoseIntolerant.choosePhraseWithInterp(phrase_info_table)
              playerObj:Say("say phrases: " .. tostring(SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption))
 
              if phrase then
