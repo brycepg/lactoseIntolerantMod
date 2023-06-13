@@ -1,0 +1,3 @@
+performance goal: 10ms for checking a stir fry with 5 ingredients
+
+idea: lua test build server on odroid

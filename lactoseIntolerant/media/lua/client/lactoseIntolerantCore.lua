@@ -1,6 +1,8 @@
 -- file contains core code which doesn't depend on the
 -- zomboid API
 --
+-- for adapter and domain code
+--
 -- table namespace like they do it in zomboid lua
 lactoseIntolerant = {}
 lactoseIntolerant.DEBUG = true
@@ -12,7 +14,7 @@ lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA = 20
 
 lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake"}
 -- If the item name matches with the above substrings, except it if it matches any of the below substrings
-lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese"}
+lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk"}
 -- Chance that a player will not say anything when eating lactose
 lactoseIntolerant.NO_PHRASE_CHANCE = 20
 
@@ -67,6 +69,55 @@ function lactoseIntolerant.choosePhraseWithInterp(info_table)
 end
 
 
+-- new class lactoseIntolerant.FoodItemContentsDecider
+-- 1. decides whether the food item contains lactose
+-- 2. can count how many ingredients contain lactose
+-- PRO: simplifies calculation code and deduplicates checks
+-- CON: harder to customize sickness level based on item name
+-- XXX: Add lactoseIntolerant after testing
+FoodItemContentsDecider = {}
+FoodItemContentsDecider.__index = FoodItemContentsDecider
+function FoodItemContentsDecider:new(item)
+    -- item: zomboid inventoryItem to decide upon
+    obj = {}
+    setmetatable(obj, FoodItemContentsDecider)
+    obj.item = item
+    obj.itemName = item:getName()
+    return obj
+end
+function FoodItemContentsDecider:containsLactose()
+    return self.howManyLactoseIngredients() >= 1
+end
+function FoodItemContentsDecider:howManyLactoseIngredients()
+    local haveExtraItems = self.item:haveExtraItems()
+    local count = 0
+    if haveExtraItems then
+        local extraItems = self.item:getExtraItems()
+        newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
+        for j = 0, extraItems:size()-1 do
+            local extraItem = extraItems:get(j)
+            if lactoseIntolerant.foodNamecontainsLactose(extraItem:getName()) then
+                count = count + 1
+            end
+            --print ("ISInventoryPage extra item "..j.." = "..tostring(extraItem or "nil"))
+        end
+    end
+    if (not haveExtraItems and
+        lactoseIntolerant.foodNameContainsLactose(self.itemName)) then
+            count = 1
+    end
+    return count
+end
+
+
+-- function lactoseIntolerant.foodItemContainsLactose(item)
+--     local haveExtraItems = item:haveExtraItems()
+--     if haveExtraItems then
+--         local extraItems = item:getExtraItems()
+--         local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
+--     for _, extraItem in ipairs(itemList) do
+-- end
+
 function lactoseIntolerant.calculateNewFoodSicknessLevelList(itemList, percentage, oldFoodSicknessLevel)
     -- calculate new food sickness level for multiple items
     -- itemList(array): an array of InventoryItem objects
@@ -77,7 +128,7 @@ function lactoseIntolerant.calculateNewFoodSicknessLevelList(itemList, percentag
     -- zero indexed list because of java?
     for _, extraItem in ipairs(itemList) do
         local itemName = extraItem:getName()
-        local food_contains_lactose = lactoseIntolerant.foodContainsLactose(itemName)
+        local food_contains_lactose = lactoseIntolerant.foodNameContainsLactose(itemName)
         if food_contains_lactose then
             oldFoodSicknessLevel = curFoodSicknessLevel
             curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
@@ -108,7 +159,6 @@ function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLeve
     return newSicknessLevel
 end
 
-
 function lactoseIntolerant.Interp(s, tab)
     -- interpolation for characters with variable dollar sign braces interpolation
     -- example: lactoseIntolerant.Interp("a: ${foo}", {foo="bar"}) == "a: bar"
@@ -129,7 +179,7 @@ local function _foodContainsNonLactoseKeywords(itemName)
 end
 
 
-function lactoseIntolerant.foodContainsLactose(itemName)
+function lactoseIntolerant.foodNameContainsLactose(itemName)
     -- Check whether a food contains lactose based on its name
     -- return bool
     local food_name = string.lower(itemName)
@@ -158,4 +208,47 @@ function lactoseIntolerant.zombListToLuaArray(zombList)
         itemArray = zombList:get(j)
     end
     return itemArray
+end
+
+            -- TODO: foodSicknessDecider class
+            -- for both single and multiple items items
+            -- knows whether to say phrase or not
+            -- pro: encapulate food sickness calculations
+            -- pro: encapulate sending phrase message state
+            -- pro: more testable
+            -- con: extra code, have to change working code
+            -- con: disposable class creation every single time
+            -- local foodSicknessDecider = lactoseIntolerant.FoodSicknessDecider:new(item)
+            -- local newSicknessLevel = lactoseIntolerant.foodSicknessDecider:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
+            -- foodSicknessDecider:shouldSayPhrase()
+FoodSicknessDecider = {}
+FoodSicknessDecider.__index = FoodSicknessDecider
+function FoodSicknessDecider:new(item)
+    -- item: an zomboid InventoryItem
+    -- to decide over
+    local obj = {}
+    setmetatable(obj, FoodSicknessDecider)
+    obj.item = item
+    obj.itemName = item:getName()
+    obj.inducesSicknessFromName = lactoseIntolerant.foodNameContainsLactose(obj.itemName)
+    return obj
+end
+
+function FoodSicknessDecider:doesItemInduceSickness()
+    -- boolean: if true the food does induce sickness
+    return self.inducesSickness
+end
+
+function FoodSicknessDecider:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
+    if not self.inducesSickness then
+        return oldFoodSicknessLevel
+    end
+    local haveExtraItems = item:haveExtraItems()
+    if haveExtraItems then
+        local extraItems = item:getExtraItems()
+        local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
+        newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
+    else
+    end
+    return newSicknessLevel
 end

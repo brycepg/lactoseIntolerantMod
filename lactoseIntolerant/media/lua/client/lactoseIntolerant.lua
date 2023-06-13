@@ -1,3 +1,6 @@
+-- code which does IO with project zomboid
+-- XXX: rename to lactoseIntolerantMain
+-- XXX: rename core to lactoseIntolerantDomain
 require 'lactoseIntolerantCore'
 
 -- How do I get the code to run ONLY if the eating action is completed?
@@ -5,7 +8,6 @@ require 'lactoseIntolerantCore'
 -- | Modify event or action?
 
 
---
 -- DONE: Add nasuea for foods with cheese in it such as a stirfry with cheese
     -- What functions describe the contents of an edible item? getExtraItems
 -- playtest out stir fry nasua
@@ -16,12 +18,14 @@ local old_eatmenu = ISInventoryPaneContextMenu.eatItem
 local lactoseIntolerantOverrideSet = false
 
 
-function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
+function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, player)
         print("Testing out the print function wubba lubba dub dub")
         old_eatmenu(item, percentage, player)
         local playerObj = getPlayer(player)
         if not playerObj:HasTrait("lactoseIntolerant") then
             playerObj:Say("I do not have lactose intolerance")
+            -- remove this check from chain, I think I can do this
+            -- even with multiplayer since it is client sided code
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
@@ -29,29 +33,10 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
 
         local bodyDamage = playerObj:getBodyDamage()
         local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-
-        local haveExtraItems = item:haveExtraItems()
-
-        if haveExtraItems then
-
-            -- TODO: foodSicknessDecider class
-            -- for both single and multiple items items
-            -- knows whether to say phrase or not
-            -- pro: encapulate food sickness calculations
-            -- pro: encapulate sending phrase message state
-            -- pro: more testable
-            -- con: extra code, have to change working code
-            -- con: disposable class creation every single time
-            local extraItems = item:getExtraItems()
-            local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
-            newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
-            bodyDamage:setFoodSicknessLevel(newSicknessLevel);
+        -- XXX copied foodSicknessDecider code from here
+    bodyDamage:setFoodSicknessLevel(newSicknessLevel);
+        end
             sayPhrase = true
-        else
-
-            itemName = item:getName()
-            playerObj:Say("Eating: " .. itemName)
-
             if lactoseIntolerant.foodContainsLactose(itemName) then
                 -- lets refactor this so I can use it for get extraItems
                  local newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
@@ -79,22 +64,23 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, player)
 end
 
 
-function overrideEatItem()
-    ISInventoryPaneContextMenu.eatItem = eatItemWithLactoseIntoleranceTrait
+function lactoseIntolerant.overrideEatItem()
+    ISInventoryPaneContextMenu.eatItem = lactoseIntolerant.eatItemWithLactoseIntoleranceTrait
 end
 
 
-function registerLactoseIntoleranceTrait()
+function lactoseIntolerant.registerLactoseIntoleranceTrait()
     local lactose_intolerant_trait_point_cost = SandboxVars.lactoseIntolerant.PointCost
     TraitFactory.addTrait("lactoseIntolerant", getText("UI_trait_lactoseIntolerant"), lactose_intolerant_trait_point_cost, getText("UI_trait_lactoseIntolerantdesc"), false)
 end
 
 if not lactoseIntolerantOverrideSet then
-    Events.OnGameBoot.Add(overrideEatItem)
-    Events.OnGameStart.Add(overrideEatItem)
-    Events.OnGameBoot.Add(registerLactoseIntoleranceTrait)
-    Events.OnGameStart.Add(registerLactoseIntoleranceTrait)
+    -- Is only boot needed?
+    Events.OnGameBoot.Add(lactoseIntolerant.overrideEatItem)
+    Events.OnGameStart.Add(lactoseIntolerant.overrideEatItem)
+    Events.OnGameBoot.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
+    Events.OnGameStart.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
     -- allow override
+    -- XXX: uncomment before release
     -- lactoseIntolerantOverrideSet = true
 end
-ISInventoryPaneContextMenu.eatItem = eatItemWithLactoseIntoleranceTrait

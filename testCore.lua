@@ -1,14 +1,15 @@
 -- luarocks is not working on my system so no luatest
 require "lactoseIntolerant/media/lua/client/lactoseIntolerantCore"
-assert( lactoseIntolerant.foodContainsLactose("cheese") == true )
-assert( lactoseIntolerant.foodContainsLactose("cheese pizza") == true )
-assert( lactoseIntolerant.foodContainsLactose("beer") == false )
-assert( lactoseIntolerant.foodContainsLactose("cat piss") == false )
-assert( lactoseIntolerant.foodContainsLactose("milk") == true )
-assert( lactoseIntolerant.foodContainsLactose("almond milk") == false )
-assert( lactoseIntolerant.foodContainsLactose("oat milk") == false )
-assert( lactoseIntolerant.foodContainsLactose("dairy free milk") == false )
-assert( lactoseIntolerant.foodContainsLactose("dairy-free milk") == false )
+require "testUtils"
+assert( lactoseIntolerant.foodNameContainsLactose("cheese") == true )
+assert( lactoseIntolerant.foodNameContainsLactose("cheese pizza") == true )
+assert( lactoseIntolerant.foodNameContainsLactose("beer") == false )
+assert( lactoseIntolerant.foodNameContainsLactose("cat piss") == false )
+assert( lactoseIntolerant.foodNameContainsLactose("milk") == true )
+assert( lactoseIntolerant.foodNameContainsLactose("almond milk") == false )
+assert( lactoseIntolerant.foodNameContainsLactose("oat milk") == false )
+assert( lactoseIntolerant.foodNameContainsLactose("dairy free milk") == false )
+assert( lactoseIntolerant.foodNameContainsLactose("dairy-free milk") == false )
 
 assert( lactoseIntolerant.Interp("hi ${name}", {name="bob"})  == "hi bob" )
 assert( lactoseIntolerant.Interp("hi", {name="bob"})  == "hi" )
@@ -21,29 +22,12 @@ function noRandomMin(min, max)
 end
 assert(lactoseIntolerant.calculateNewFoodSicknessLevel(0, 1, noRandomMin) == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
 
-function getName(self)
-    return self.name
-end
-
-testItem = {}
-testItem.__index = testItem
-function testItem:create(name)
-   local item = {}             -- our new object
-   setmetatable(item,testItem)  -- make testItem handle lookup
-   item.name = name      -- initialize our object
-   return item
-end
-
-function testItem:getName()
-   return self.name
-end
-
-item1 = testItem:create("foo")
+itemWithoutCheese = testItem:create("foo")
 item2 = testItem:create("cheese figurine")
 item2 = testItem:create("milk without cow")
 
 testItemList = {
-    item1,
+    itemWithoutCheese,
     item2,
 }
 
@@ -56,7 +40,7 @@ assert(newValue == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntoler
 item3 = testItem:create("cheese2")
 
 testItemListTwoIngredients = {
-    item1,
+    itemWithoutCheese,
     item2,
     item3,
 }
@@ -64,3 +48,7 @@ newValue = lactoseIntolerant.calculateNewFoodSicknessLevelList(testItemListTwoIn
 assert(newValue == (lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)*2)
 
 -- todo test interpolated phrases
+--
+
+itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(itemWithoutCheese)
+assert (itemWithoutCheeseContentsDecider:howManyLactoseIngredients() == 0)
