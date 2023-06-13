@@ -1,0 +1,7 @@
+UI_EN = {
+--------------------------------------
+lactose Intolerant Trait
+--------------------------------------
+    UI_trait_lactoseIntolerant = "Lactose Intolerant",
+    UI_trait_lactoseIntolerantdesc = "Dairy upsets your tummy wummy",
+}

@@ -1,0 +1,4 @@
+name=Lactose Intolerant Trait
+poster=poster.png
+id=LactoseIntolerantTrait
+description=Adds a lactose intolerant trait which makes the player sick if they consume dairy food
