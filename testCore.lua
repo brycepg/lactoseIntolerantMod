@@ -96,11 +96,20 @@ function test_food_sickness_calculator_with_extra_items()
     local exi = ExtraItems:new{extraItems1, extraItems2, extraItems3}
     local item = TestItemWithExtraItems:new("stiry fry rymdreglage", exi)
     local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
-    local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
+    local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(
+        original_sickness, FULLPERCENTAGE
+    )
     local expected = (lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA) * 2
     print("lactose count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyLactoseIngredients()))
     print("new: " .. tostring(new_sickness_level))
     assert(new_sickness_level == expected)
+
+    local fsc = FoodSicknessCalculator:from_item(item)
+    oldFoodSicknessLevel = original_sickness
+    percentage = FULLPERCENTAGE
+    newSicknessLevel = fsc:calculateNewSicknessLevel(
+        oldFoodSicknessLevel, percentage
+    )
 end
 
 test_food_sickness_calculator_with_extra_items()

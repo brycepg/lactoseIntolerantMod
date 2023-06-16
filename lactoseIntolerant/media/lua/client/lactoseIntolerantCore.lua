@@ -8,7 +8,7 @@ lactoseIntolerant = {}
 lactoseIntolerant.DEBUG = true
 
 -- possible sickness delta is (BASE-MIN to BASE+MAX-1)
-lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE = 30
+lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE = 50
 lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA = 0
 lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA = 20
 
@@ -50,11 +50,25 @@ lactoseIntolerant.phrases = {
 ------------------------- functions ---------------------------
 ---------------------------------------------------------------
 
-function lactoseIntolerant.choosePhrase(randfunc)
-    -- choose phrase for player to say
+function lactoseIntolerant.populatePhraseInfo(playerObj, itemName)
+     local phrase_info_table = {}
+     phrase_info_table.age = tostring(playerObj:getAge())
+     phrase_info_table.name = playerObj:getName()
+     phrase_info_table.item = itemName
+     return phrase_info_table
+end
+
+
+function lactoseIntolerant.skipPhraseChance(randfunc)
     if randfunc(0, 99) < lactoseIntolerant.NO_PHRASE_CHANCE then
-        return ""
+        return false
     end
+    return true
+end
+
+function lactoseIntolerant.choosePhrase(randfunc)
+    -- XXX: remove randfunc
+    -- choose phrase for player to say
     local index = randfunc(0, #lactoseIntolerant.phrases)
     if lactoseIntolerant.DEBUG then
         print("chosen index: " .. tostring(index))
@@ -120,7 +134,7 @@ function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLeve
     -- returns: a float/int with of new sickness level
     local multiplier = 1
     -- Feel effects more immediately for the player, and then back off additive sickness
-    if currentFoodSicknessLevel > 50 then
+    if currentFoodSicknessLevel > 71 then
         multiplier = multiplier * 0.5
     end
     local _rand_extra = randfunc(lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA, lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA)

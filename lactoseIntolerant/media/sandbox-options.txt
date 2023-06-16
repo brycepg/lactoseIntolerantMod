@@ -1,15 +1,8 @@
 VERSION = 1,
 
-option lactoseIntolerant.PointCost {
-	type = integer,
-	min = -100,
-	max = 100,
-	default = -1,
-    page = lactoseIntolerant,
-}
-
 option lactoseIntolerant.SayPhrasesOnDairyConsumption {
 	type = boolean,
 	default = true,
+    translation = lactoseIntolerant_SayPhrasesOption
 	page = lactoseIntolerant,
 }

@@ -1,0 +1,5 @@
+Add a -1 trait for lactose intolerance
+
+When a player eats dairy they will become sick
+Sickness is cumulative and if you keep eating dairy within a
+short amount of time you will loose health.
