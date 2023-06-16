@@ -11,6 +11,7 @@ require 'lactoseIntolerantCore'
 -- Do I need to specify both on game boot and on game start
 -- Test sandbox option for trait points (default: +1)
 -- implement allow phrases to be disableable
+-- time how long it takes to complete action
 local old_eatmenu = ISInventoryPaneContextMenu.eatItem
 local lactoseIntolerantOverrideSet = false
 

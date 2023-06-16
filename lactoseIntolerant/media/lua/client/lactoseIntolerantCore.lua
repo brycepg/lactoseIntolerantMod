@@ -12,9 +12,10 @@ lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE = 30
 lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA = 0
 lactoseIntolerant.NEW_FOOD_SICKNESS_MAX_RAND_EXTRA = 20
 
-lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake"}
+lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake", "nutella"}
+
 -- If the item name matches with the above substrings, except it if it matches any of the below substrings
-lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk"}
+lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate"}
 -- Chance that a player will not say anything when eating lactose
 lactoseIntolerant.NO_PHRASE_CHANCE = 20
 
@@ -74,14 +75,16 @@ end
 
 function lactoseIntolerant.calculateNewFoodSicknessCount(count, oldFoodSicknessLevel, percentage)
     -- calculate new food sickness level for multiple items
-    -- count(number): nubmer of items which induce sickenss
+    -- count(number): number of items which induce sickenss
     -- percentage(number): percentage of the item eaten
     -- oldFoodSicknessLevel(number): baseline sickness before itemList was eaten
     local curFoodSicknessLevel = oldFoodSicknessLevel
     i = 0
+    -- print("count: " .. tostring(count))
     while i < count do
-         curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
-        i = count + 1
+        -- print("i: " .. tostring(i))
+        curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
+        i = i + 1
     end
     return curFoodSicknessLevel
 end
@@ -116,7 +119,7 @@ function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLeve
     -- for testing
     -- returns: a float/int with of new sickness level
     local multiplier = 1
-    -- Feel effects more immediately for the player, and then back of additive sickness
+    -- Feel effects more immediately for the player, and then back off additive sickness
     if currentFoodSicknessLevel > 50 then
         multiplier = multiplier * 0.5
     end
@@ -191,9 +194,7 @@ end
             -- pro: more testable
             -- con: extra code, have to change working code
             -- con: disposable class creation every single time
-            -- local foodSicknessDecider = lactoseIntolerant.FoodSicknessCalculator:new(item)
-            -- local newSicknessLevel = lactoseIntolerant.foodSicknessDecider:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
-            -- foodSicknessDecider:shouldSayPhrase()
+            -- implement shouldSayPhrase() ?
 FoodSicknessCalculator = {}
 FoodSicknessCalculator.__index = FoodSicknessCalculator
 
