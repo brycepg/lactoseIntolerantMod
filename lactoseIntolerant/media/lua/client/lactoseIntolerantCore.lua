@@ -61,9 +61,9 @@ end
 
 function lactoseIntolerant.skipPhraseChance(randfunc)
     if randfunc(0, 99) < lactoseIntolerant.NO_PHRASE_CHANCE then
-        return false
+        return true
     end
-    return true
+    return false
 end
 
 function lactoseIntolerant.choosePhrase(randfunc)
