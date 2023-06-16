@@ -1,35 +1,62 @@
+-- Class ExtraItems --
+ExtraItems = {}
+function ExtraItems:new(table)
+    obj = {}
+    obj._table = table
+    setmetatable(obj, ExtraItems)
+    ExtraItems.__index = ExtraItems
+    return obj
+end
+
+function ExtraItems:size()
+    return #(self._table)
+end
+
+function ExtraItems:get(index)
+    local lua_index = index+1
+    return self._table[lua_index]
+end
+
 function getName(self)
     return self.name
 end
 
-testItem = {}
-testItem.__index = testItem
-function testItem:create(name)
-   local item = {}             -- our new object
-   setmetatable(item,testItem)  -- make testItem handle lookup
+TestItem = {}
+-- XXX rename create to new
+function TestItem:new(name)
+   item = {}             -- our new object
    item.name = name      -- initialize our object
+   setmetatable(item,self)  -- make TestItem handle lookup
+   self.__index = self
    return item
 end
 
-function testItem:haveExtraItems()
+function TestItem:haveExtraItems()
     return false
 end
-function testItem:getName()
+function TestItem:getName()
    return self.name
 end
 
 
 TestItemWithExtraItems = {}
-TestItemWithExtraItems.__index = TestItemWithExtraItems
-function TestItemWithExtraItems:create(name, extraItems)
-   local item = {}             -- our new object
-   setmetatable(item,TestItemWithExtraItems)  -- make TestItemWithExtraItems handle lookup
-   item.name = name      -- initialize our object
-   return item
+-- How does inheritance
+function TestItemWithExtraItems:new(name, extraItems)
+   obj = {}             -- our new object
+   obj.name = name      -- initialize our object
+   obj.extraItems = extraItems
+   setmetatable(obj,self)  -- make TestItemWithExtraItems handle lookup
+   self.__index = self
+   return obj
 end
 
 function TestItemWithExtraItems:haveExtraItems()
-    return extraItems.size() > 0
+    local ei = self.extraItems
+    return ei:size() > 0
 end
 
-function TestItemWithExtraItems:getName = testItem.getName
+function TestItemWithExtraItems:getExtraItems()
+    return self.extraItems
+end
+
+TestItemWithExtraItems.getName = TestItem.getName

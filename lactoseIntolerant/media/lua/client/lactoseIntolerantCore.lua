@@ -45,6 +45,9 @@ lactoseIntolerant.phrases = {
     "It's not just any cow.. it's a dairy cow",
 }
 
+---------------------------------------------------------------
+------------------------- functions ---------------------------
+---------------------------------------------------------------
 
 function lactoseIntolerant.choosePhrase(randfunc)
     -- choose phrase for player to say
@@ -69,63 +72,28 @@ function lactoseIntolerant.choosePhraseWithInterp(info_table)
 end
 
 
--- new class lactoseIntolerant.FoodItemContentsDecider
--- 1. decides whether the food item contains lactose
--- 2. can count how many ingredients contain lactose
--- PRO: simplifies calculation code and deduplicates checks
--- CON: harder to customize sickness level based on item name
--- XXX: Add lactoseIntolerant after testing
-FoodItemContentsDecider = {}
-FoodItemContentsDecider.__index = FoodItemContentsDecider
-function FoodItemContentsDecider:new(item)
-    -- item: zomboid inventoryItem to decide upon
-    obj = {}
-    setmetatable(obj, FoodItemContentsDecider)
-    obj.item = item
-    obj.itemName = item:getName()
-    return obj
-end
-function FoodItemContentsDecider:containsLactose()
-    return self.howManyLactoseIngredients() >= 1
-end
-function FoodItemContentsDecider:howManyLactoseIngredients()
-    local haveExtraItems = self.item:haveExtraItems()
-    local count = 0
-    if haveExtraItems then
-        local extraItems = self.item:getExtraItems()
-        newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
-        for j = 0, extraItems:size()-1 do
-            local extraItem = extraItems:get(j)
-            if lactoseIntolerant.foodNamecontainsLactose(extraItem:getName()) then
-                count = count + 1
-            end
-            --print ("ISInventoryPage extra item "..j.." = "..tostring(extraItem or "nil"))
-        end
+function lactoseIntolerant.calculateNewFoodSicknessCount(count, oldFoodSicknessLevel, percentage)
+    -- calculate new food sickness level for multiple items
+    -- count(number): nubmer of items which induce sickenss
+    -- percentage(number): percentage of the item eaten
+    -- oldFoodSicknessLevel(number): baseline sickness before itemList was eaten
+    local curFoodSicknessLevel = oldFoodSicknessLevel
+    i = 0
+    while i < count do
+         curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
+        i = count + 1
     end
-    if (not haveExtraItems and
-        lactoseIntolerant.foodNameContainsLactose(self.itemName)) then
-            count = 1
-    end
-    return count
+    return curFoodSicknessLevel
 end
 
-
--- function lactoseIntolerant.foodItemContainsLactose(item)
---     local haveExtraItems = item:haveExtraItems()
---     if haveExtraItems then
---         local extraItems = item:getExtraItems()
---         local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
---     for _, extraItem in ipairs(itemList) do
--- end
 
 function lactoseIntolerant.calculateNewFoodSicknessLevelList(itemList, percentage, oldFoodSicknessLevel)
     -- calculate new food sickness level for multiple items
     -- itemList(array): an array of InventoryItem objects
-    -- percentage(int/float): percentage of the item eaten
-    -- oldFoodSicknessLevel(int/float): baseline sickness before itemList was eaten
+    -- percentage(number): percentage of the item eaten
+    -- oldFoodSicknessLevel(number): baseline sickness before itemList was eaten
     local curFoodSicknessLevel = oldFoodSicknessLevel
 
-    -- zero indexed list because of java?
     for _, extraItem in ipairs(itemList) do
         local itemName = extraItem:getName()
         local food_contains_lactose = lactoseIntolerant.foodNameContainsLactose(itemName)
@@ -158,6 +126,7 @@ function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLeve
     local newSicknessLevel = currentFoodSicknessLevel + sicknessDelta
     return newSicknessLevel
 end
+
 
 function lactoseIntolerant.Interp(s, tab)
     -- interpolation for characters with variable dollar sign braces interpolation
@@ -205,12 +174,16 @@ function lactoseIntolerant.zombListToLuaArray(zombList)
     -- convert project zomboid java array object to a native lua array
     itemArray = {}
     for j = 0, zombList:size()-1 do
-        itemArray = zombList:get(j)
+        itemArray[j+1] = zombList:get(j)
     end
     return itemArray
 end
+---------------------------------------------------------------
 
-            -- TODO: foodSicknessDecider class
+
+---------------------------------------------------------------
+----------------- Class FoodSicknessCalculator ----------------
+---------------------------------------------------------------
             -- for both single and multiple items items
             -- knows whether to say phrase or not
             -- pro: encapulate food sickness calculations
@@ -218,37 +191,111 @@ end
             -- pro: more testable
             -- con: extra code, have to change working code
             -- con: disposable class creation every single time
-            -- local foodSicknessDecider = lactoseIntolerant.FoodSicknessDecider:new(item)
+            -- local foodSicknessDecider = lactoseIntolerant.FoodSicknessCalculator:new(item)
             -- local newSicknessLevel = lactoseIntolerant.foodSicknessDecider:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
             -- foodSicknessDecider:shouldSayPhrase()
-FoodSicknessDecider = {}
-FoodSicknessDecider.__index = FoodSicknessDecider
-function FoodSicknessDecider:new(item)
+FoodSicknessCalculator = {}
+FoodSicknessCalculator.__index = FoodSicknessCalculator
+
+function FoodSicknessCalculator:new(food_item_contents_decider)
     -- item: an zomboid InventoryItem
     -- to decide over
     local obj = {}
-    setmetatable(obj, FoodSicknessDecider)
-    obj.item = item
-    obj.itemName = item:getName()
-    obj.inducesSicknessFromName = lactoseIntolerant.foodNameContainsLactose(obj.itemName)
+    setmetatable(obj, FoodSicknessCalculator)
+    obj.food_item_contents_decider = food_item_contents_decider
     return obj
 end
 
-function FoodSicknessDecider:doesItemInduceSickness()
-    -- boolean: if true the food does induce sickness
-    return self.inducesSickness
+function FoodSicknessCalculator:from_item(item)
+    realized_food_contents = RealizedFoodContents:new(item)
+    item_contents_decider = FoodItemContentsDecider:new(realized_food_contents)
+    food_sickness_calculator = self:new(item_contents_decider)
+    return food_sickness_calculator
 end
 
-function FoodSicknessDecider:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
-    if not self.inducesSickness then
+function FoodSicknessCalculator:doesItemInduceSickness()
+    -- boolean: if true the food does induce sickness
+    return self.food_item_contents_decider:containsLactose()
+end
+
+function FoodSicknessCalculator:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
+    if not self:doesItemInduceSickness() then
         return oldFoodSicknessLevel
     end
-    local haveExtraItems = item:haveExtraItems()
-    if haveExtraItems then
-        local extraItems = item:getExtraItems()
-        local itemArray = lactoseIntolerant.zombListToLuaArray(extraItems)
-        newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevelList(itemArray, oldFoodSicknessLevel, percentage)
-    else
-    end
-    return newSicknessLevel
+    return lactoseIntolerant.calculateNewFoodSicknessCount(self.food_item_contents_decider:howManyLactoseIngredients(), oldFoodSicknessLevel, percentage)
 end
+---------------------------------------------------------------
+
+
+---------------------------------------------------------------
+---------------- Class FoodItemContentsDecider ----------------
+---------------------------------------------------------------
+--
+-- 1. decides whether the food item contains lactose
+-- 2. can count how many ingredients contain lactose
+-- PRO: simplifies calculation code and deduplicates checks
+-- CON: harder to customize sickness level based on item name
+--
+FoodItemContentsDecider = {}
+FoodItemContentsDecider.__index = FoodItemContentsDecider
+function FoodItemContentsDecider:new(realized_food_contents)
+    -- realized_food_contents: object of RealizedFoodContents
+    -- intentionally coupling realized_food_contents
+    -- in case I want to change how the item is
+    -- looked at in the future
+    obj = {}
+    obj.relevant_item_names = realized_food_contents:getItemNames()
+    setmetatable(obj, FoodItemContentsDecider)
+    return obj
+end
+function FoodItemContentsDecider:containsLactose()
+    return self:howManyLactoseIngredients() >= 1
+end
+function FoodItemContentsDecider:howManyLactoseIngredients()
+    local count = 0
+    for i, food_name in ipairs(self.relevant_item_names) do
+        if lactoseIntolerant.foodNameContainsLactose(food_name) then
+        count = count + 1
+    end
+    end
+    return count
+end
+
+
+---------------------------------------------------------------
+---------------- Class RealizedFoodContents -------------------
+---------------------------------------------------------------
+--- food contents are the actual items that the player is eating instead of the
+--- summarized
+--- PRO: allows me to do the unwrapping of inventory items in one place
+-- CON: not much, kind of hard to understand what this does
+
+RealizedFoodContents = {}
+function RealizedFoodContents:new(item)
+    -- inventoryItem: The item from the context menu
+    -- menu
+    obj = {}
+    obj.inventoryItem = item
+    setmetatable(obj, self)
+    self.__index = self
+    return obj
+end
+
+function RealizedFoodContents:gatherBaseItems()
+    local haveExtraItems = self.inventoryItem:haveExtraItems()
+    if haveExtraItems then
+        local extraItems = self.inventoryItem:getExtraItems()
+        return lactoseIntolerant.zombListToLuaArray(extraItems)
+    end
+    return {self.inventoryItem}
+end
+
+function RealizedFoodContents:getItemNames()
+    local names = {}
+    for i, item in pairs(self:gatherBaseItems()) do
+        names[i] = item:getName()
+    end
+    return names
+end
+
+---------------------------------------------------------------

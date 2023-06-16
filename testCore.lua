@@ -1,6 +1,10 @@
 -- luarocks is not working on my system so no luatest
-require "lactoseIntolerant/media/lua/client/lactoseIntolerantCore"
+require "lactoseIntolerantCore"
 require "testUtils"
+
+lactoseIntolerant.DEBUG = true
+FULLPERCENTAGE = 1
+
 assert( lactoseIntolerant.foodNameContainsLactose("cheese") == true )
 assert( lactoseIntolerant.foodNameContainsLactose("cheese pizza") == true )
 assert( lactoseIntolerant.foodNameContainsLactose("beer") == false )
@@ -22,9 +26,9 @@ function noRandomMin(min, max)
 end
 assert(lactoseIntolerant.calculateNewFoodSicknessLevel(0, 1, noRandomMin) == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
 
-itemWithoutCheese = testItem:create("foo")
-item2 = testItem:create("cheese figurine")
-item2 = testItem:create("milk without cow")
+itemWithoutCheese = TestItem:new("foo")
+item2 = TestItem:new("cheese figurine")
+item2 = TestItem:new("milk without cow")
 
 testItemList = {
     itemWithoutCheese,
@@ -37,7 +41,7 @@ end
 newValue = lactoseIntolerant.calculateNewFoodSicknessLevelList(testItemList, 1, 0)
 assert(newValue == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
 
-item3 = testItem:create("cheese2")
+item3 = TestItem:new("cheese2")
 
 testItemListTwoIngredients = {
     itemWithoutCheese,
@@ -50,5 +54,40 @@ assert(newValue == (lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntole
 -- todo test interpolated phrases
 --
 
-itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(itemWithoutCheese)
+rfcwocheese = RealizedFoodContents:new(itemWithoutCheese)
+itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(rfcwocheese)
 assert (itemWithoutCheeseContentsDecider:howManyLactoseIngredients() == 0)
+
+
+_assert = assert
+function assert(val, val2)
+    print(tostring(val))
+    _assert(val)
+end
+-- Test food sickness calculator from item
+function test_food_sickness_calculator_no_lactose()
+    -- should be the same value given
+    local original_sickness = 69
+    local item3 = TestItem:new("butt sauce")
+    local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+    local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
+    print("osl: " .. tostring(original_sickness))
+    print("nsl: " .. tostring(new_sickness_level))
+    print("count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyLactoseIngredients()))
+    assert(new_sickness_level == original_sickness)
+end
+
+test_food_sickness_calculator_no_lactose()
+
+function test_food_sickness_calculator_with_lactose()
+    -- should be the same value given
+    local original_sickness = 0
+    local item3 = TestItem:new("cheese cat")
+    local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+    local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
+    local should_be_new = lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA
+    print("new_sickness_level: " .. tostring(new_sickness_level))
+    assert(new_sickness_level == should_be_new)
+end
+
+test_food_sickness_calculator_with_lactose()

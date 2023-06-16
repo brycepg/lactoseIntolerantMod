@@ -1,6 +1,4 @@
 -- code which does IO with project zomboid
--- XXX: rename to lactoseIntolerantMain
--- XXX: rename core to lactoseIntolerantDomain
 require 'lactoseIntolerantCore'
 
 -- How do I get the code to run ONLY if the eating action is completed?
@@ -9,7 +7,6 @@ require 'lactoseIntolerantCore'
 
 
 -- DONE: Add nasuea for foods with cheese in it such as a stirfry with cheese
-    -- What functions describe the contents of an edible item? getExtraItems
 -- playtest out stir fry nasua
 -- Do I need to specify both on game boot and on game start
 -- Test sandbox option for trait points (default: +1)
@@ -29,25 +26,16 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
-        local sayPhrase = false
 
         local bodyDamage = playerObj:getBodyDamage()
         local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-        -- XXX copied foodSicknessDecider code from here
-    bodyDamage:setFoodSicknessLevel(newSicknessLevel);
+        food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+        newSicknessLevel = food_sickness_calculator:calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage)
+        if newSicknessLevel ~= oldFoodSicknessLevel then
+            bodyDamage:setFoodSicknessLevel(newSicknessLevel)
         end
-            sayPhrase = true
-            if lactoseIntolerant.foodContainsLactose(itemName) then
-                -- lets refactor this so I can use it for get extraItems
-                 local newSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(oldFoodSicknessLevel, percentage, ZombRand)
-                 bodyDamage:setFoodSicknessLevel(newSicknessLevel);
-                 sayPhrase = true
-             end
-        end
-
-         if sayPhrase then
-
-             -- allow disabling of phrase
+        if newSicknessLevel > oldFoodSicknessLevel then
+             -- XXX: allow disabling of phrase
              local phrase_info_table = {}
              phrase_info_table.age = tostring(playerObj:getAge())
              phrase_info_table.name = playerObj:getName()
@@ -56,7 +44,6 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
              playerObj:Say("phrase_info_table: " .. tostring(phrase_info_table))
              local phrase = lactoseIntolerant.choosePhraseWithInterp(phrase_info_table)
              playerObj:Say("say phrases: " .. tostring(SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption))
-
              if phrase then
                 playerObj:Say(phrase)
             end
