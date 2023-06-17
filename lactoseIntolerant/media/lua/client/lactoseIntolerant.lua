@@ -1,4 +1,6 @@
--- code which does IO with project zomboid
+-- This file contains code which does IO with project zomboid
+
+--------------------------------------------------------------
 require 'lactoseIntolerantCore'
 
 -- playtest out stir fry nasua
@@ -12,6 +14,12 @@ require 'lactoseIntolerantCore'
 
 -- DONE: Add nasuea for foods with cheese in it such as a stirfry with cheese
 -- DONE: playtest allow phrases to be disableable
+
+
+--------------------------------------------------------------
+-------------------- Function override -----------------------
+--------------------------------------------------------------
+
 local old_eatmenu = ISInventoryPaneContextMenu.eatItem
 local lactoseIntolerantOverrideSet = false
 
@@ -27,6 +35,7 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
             return
         end
 
+        ------------------ Sickness calculation ---------------
         local bodyDamage = playerObj:getBodyDamage()
         local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
         local fsc = FoodSicknessCalculator:from_item(item)
@@ -36,6 +45,8 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
         if newSicknessLevel ~= oldFoodSicknessLevel then
             bodyDamage:setFoodSicknessLevel(newSicknessLevel)
         end
+
+        ------------------- Phrase code -----------------------
         shouldSayPhrase = (
             SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption and
             newSicknessLevel > oldFoodSicknessLevel and
@@ -59,12 +70,29 @@ function lactoseIntolerant.overrideEatItem()
 end
 
 
+--------------------------------------------------------------
+----------------------- Trait registration  ------------------
+--------------------------------------------------------------
+
 function lactoseIntolerant.registerLactoseIntoleranceTrait()
     local lactose_intolerant_trait_point_cost = -1
     -- not sure how to make point cost configurable, not worth it
     -- local lactose_intolerant_trait_point_cost = SandboxVars.lactoseIntolerant.PointCost
     TraitFactory.addTrait("lactoseIntolerant", getText("UI_trait_lactoseIntolerant"), lactose_intolerant_trait_point_cost, getText("UI_trait_lactoseIntolerantdesc"), false)
 end
+
+
+---------------------------------------------------------------
+------------------------- Main --------------------------------
+--------------------------------------------------------------
+-- These are the entry points for this mod
+
+-- 1. override function.
+-- this over ride function calls the old function to preserve
+-- functionality and the ability of other mods to add to this
+-- chain
+-- 2. trait registration
+-- This allows the trait to show up during character selection
 
 if not lactoseIntolerantOverrideSet then
     -- Is only boot needed?
