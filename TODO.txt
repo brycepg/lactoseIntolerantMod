@@ -1,1 +1,49 @@
+TODO: Use hunger delta of items for relative sickness
+
 - go through all le gourmet recipes and verify which ones are or are not lactose
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------
+--------------------------questions----------------------------
+---------------------------------------------------------------
+and then 
+future question?: Do I use the hunger of the total meal or the extra items that contain dairy?
+- for example hydrated powdered milk
+
+
