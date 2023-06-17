@@ -69,9 +69,7 @@ end
 if not lactoseIntolerantOverrideSet then
     -- Is only boot needed?
     Events.OnGameBoot.Add(lactoseIntolerant.overrideEatItem)
-    Events.OnGameStart.Add(lactoseIntolerant.overrideEatItem)
     Events.OnGameBoot.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
-    Events.OnGameStart.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
     -- allow override
     -- XXX: uncomment before release
     -- lactoseIntolerantOverrideSet = true
