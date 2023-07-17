@@ -55,12 +55,14 @@ lactoseIntolerant.phrases = {
     "There's gonna be a war zone in my asshole",
     "I'm gonna be shaking off farts for the next hour",
     "It's not just any cow.. it's a dairy cow",
+    -- Interp tests pass but I have an error during execution.. WHY?
     -- "${age} years old and to think I'd learn not to eat dairy",
 }
 
 ------------------------- Testing -----------------------------
 if not ZombRand and lactoseIntolerant.DEBUG then
     function setZombRand(value)
+        ---@diagnostic disable-next-line: unused-local
         ZombRand = function(min, max)
             return value
         end

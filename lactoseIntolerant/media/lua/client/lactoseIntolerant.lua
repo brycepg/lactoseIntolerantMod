@@ -52,10 +52,15 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
             newSicknessLevel > oldFoodSicknessLevel and
             lactoseIntolerant.skipPhraseChance(ZombRand)
         )
+        if lactoseIntolerant.DEBUG then
+            shouldSayPhrase = true
+        end
         if shouldSayPhrase then
              phrase_info =  lactoseIntolerant.populatePhraseInfo(
                  playerObj, itemName
              )
+             print("lactoseMod: AGE -> ", tostring(phrase_info.age))
+             print("lactoseMod: NAME -> ", tostring(phrase_info.name))
              local phraseString = lactoseIntolerant.choosePhraseWithInterp(
                  phrase_info_table
              )
