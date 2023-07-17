@@ -42,6 +42,10 @@ lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whe
 lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate"}
 -- Chance that a player will not say anything when eating lactose
 
+lactoseIntolerant.FOODS_WITH_GLUTEN = {"baguette", "biscuit", "cake", "cereal", "bread", "pão", "burrito", "sandwich", "nuggets", "cornbread", "corndog", "croissant", "cupcake", "doughnut", "muffin", "dumpling", "noodle soup", "pancakes", "perogies", "pie", "pizza", "bagel", "taco", "tortilla", "waffles", "cinnamon roll", "cone", "crackers", "ramen", "flour", "gravy", "pasta", "pretzel"}
+lactoseIntolerant.NON_GLUENT_KEYWORDS = {"gluent[ -]free", "potato pancakes"}
+
+
 ------------------- Phrase configuration ----------------------
 lactoseIntolerant.NO_PHRASE_CHANCE = 20
 
