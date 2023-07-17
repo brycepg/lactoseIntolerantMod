@@ -1,0 +1,6 @@
+version=1
+id=3004329413
+title=Lactose Intolerant Trait
+description=Adds a lactose intolerant trait which makes the player sick if they consume dairy food
+tags=Build 41;Food;Silly/Fun;Traits
+visibility=public
