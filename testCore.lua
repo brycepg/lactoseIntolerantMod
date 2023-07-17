@@ -57,8 +57,8 @@ assert(newValue == (lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICK
 --
 
 rfcwocheese = RealizedFoodContents:new(itemWithoutCheese)
-itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(rfcwocheese)
-assert(itemWithoutCheeseContentsDecider:howManyLactoseIngredients() == 0)
+itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(rfcwocheese, lactoseIntolerant.foodNameContainsLactose)
+assert(itemWithoutCheeseContentsDecider:howManyMatchingIngredients() == 0)
 
 
 -- Test food sickness calculator from item
@@ -70,7 +70,7 @@ function test_food_sickness_calculator_no_lactose()
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
     print("osl: " .. tostring(original_sickness))
     print("nsl: " .. tostring(new_sickness_level))
-    print("count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyLactoseIngredients()))
+    print("count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyMatchingIngredients()))
     assert(new_sickness_level == original_sickness)
 end
 
@@ -102,7 +102,7 @@ function test_food_sickness_calculator_with_extra_items()
         original_sickness, FULLPERCENTAGE
     )
     local expected = (lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA) * 2
-    print("lactose count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyLactoseIngredients()))
+    print("lactose count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyMatchingIngredients()))
     print("new: " .. tostring(new_sickness_level))
     assert(new_sickness_level == expected)
 

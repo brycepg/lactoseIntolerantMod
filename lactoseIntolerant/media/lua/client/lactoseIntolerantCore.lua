@@ -1,3 +1,5 @@
+require "genericFoodIntolerance"
+
 -- file contains core code which doesn't depend on the
 -- zomboid API
 --
@@ -42,7 +44,7 @@ lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whe
 lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate"}
 -- Chance that a player will not say anything when eating lactose
 
-lactoseIntolerant.FOODS_WITH_GLUTEN = {"baguette", "biscuit", "cake", "cereal", "bread", "pão", "burrito", "sandwich", "nuggets", "cornbread", "corndog", "croissant", "cupcake", "doughnut", "muffin", "dumpling", "noodle soup", "pancakes", "perogies", "pie", "pizza", "bagel", "taco", "tortilla", "waffles", "cinnamon roll", "cone", "crackers", "ramen", "flour", "gravy", "pasta", "pretzel"}
+lactoseIntolerant.FOODS_WITH_GLUTEN = {"baguette", "biscuit", "cake", "cereal", "bread", "pão", "burrito", "sandwich", "nuggets", "cornbread", "corndog", "croissant", "cupcake", "doughnut", "muffin", "dumpling", "noodle soup", "pancakes", "perogies", "pie", "pizza", "bagel", "taco", "tortilla", "waffles", "cinnamon roll", "cone", "crackers", "ramen", "flour", "gravy", "pasta", "pretzel", "beer"}
 lactoseIntolerant.NON_GLUENT_KEYWORDS = {"gluent[ -]free", "potato pancakes"}
 
 
@@ -88,46 +90,11 @@ end
 -- I decided to go with fuzzy matching to provide more support
 -- for mods (no classes)
 
-local function _foodContainsNonLactoseKeywords(itemName)
-    for i = 1, #lactoseIntolerant.NON_LACTOSE_KEYWORDS do
-        match = string.find(itemName, lactoseIntolerant.NON_LACTOSE_KEYWORDS[i])
-        if match ~= nil then
-            return true
-        end
-    end
-    return false
-end
-
-
 function lactoseIntolerant.foodNameContainsLactose(itemName)
-    -- Check whether a food contains lactose based on its name
-    -- return bool
-    local food_name = string.lower(itemName)
-    local food_with_lactose_match = false
-    for i = 1, #lactoseIntolerant.FOODS_WITH_LACTOSE do
-        match = string.find(food_name, lactoseIntolerant.FOODS_WITH_LACTOSE[i])
-        if match ~= nil then
-            food_with_lactose_match = true
-            break
-        end
-    end
-    if food_with_lactose_match then
-        excepting_keyword = _foodContainsNonLactoseKeywords(food_name)
-        if excepting_keyword then
-            food_with_lactose_match = false
-        end
-    end
-    return food_with_lactose_match
-end
-
-
-function lactoseIntolerant.zombListToLuaArray(zombList)
-    -- convert project zomboid java array object to a native lua array
-    itemArray = {}
-    for j = 0, zombList:size()-1 do
-        itemArray[j+1] = zombList:get(j)
-    end
-    return itemArray
+    return genericFoodIntolerance.foodNameMatches(
+        itemName,
+        lactoseIntolerant.FOODS_WITH_LACTOSE,
+        lactoseIntolerant.NON_LACTOSE_KEYWORDS)
 end
 
 
@@ -253,6 +220,8 @@ end
 -- These classes streamline the checking of food items
 -- for dairy and subsequent sickness calculations
 
+--- XXX if I make this class local can I still test it?
+--- otherwise I need to namespace or rename it
 ---------------------------------------------------------------
 ----------------- Class FoodSicknessCalculator ----------------
 ---------------------------------------------------------------
@@ -278,96 +247,19 @@ end
 
 function FoodSicknessCalculator:from_item(item)
     realized_food_contents = RealizedFoodContents:new(item)
-    item_contents_decider = FoodItemContentsDecider:new(realized_food_contents)
+    item_contents_decider = FoodItemContentsDecider:new(realized_food_contents, lactoseIntolerant.foodNameContainsLactose)
     food_sickness_calculator = self:new(item_contents_decider)
     return food_sickness_calculator
 end
 
 function FoodSicknessCalculator:doesItemInduceSickness()
     -- boolean: if true the food does induce sickness
-    return self.food_item_contents_decider:containsLactose()
+    return self.food_item_contents_decider:containsFoodNameMatch()
 end
 
 function FoodSicknessCalculator:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
     if not self:doesItemInduceSickness() then
         return oldFoodSicknessLevel
     end
-    return lactoseIntolerant.calculateNewFoodSicknessCount(self.food_item_contents_decider:howManyLactoseIngredients(), oldFoodSicknessLevel, percentage)
+    return lactoseIntolerant.calculateNewFoodSicknessCount(self.food_item_contents_decider:howManyMatchingIngredients(), oldFoodSicknessLevel, percentage)
 end
----------------------------------------------------------------
-
-
----------------------------------------------------------------
----------------- Class FoodItemContentsDecider ----------------
----------------------------------------------------------------
---
--- 1. decides whether the food item contains lactose
--- 2. can count how many ingredients contain lactose
--- PRO: simplifies calculation code and deduplicates checks
--- CON: harder to customize sickness level based on item name
---
-FoodItemContentsDecider = {}
-FoodItemContentsDecider.__index = FoodItemContentsDecider
-function FoodItemContentsDecider:new(realized_food_contents)
-    -- realized_food_contents: object of RealizedFoodContents
-    -- intentionally coupling realized_food_contents
-    -- in case I want to change how the item is
-    -- looked at in the future
-    obj = {}
-    obj.relevant_item_names = realized_food_contents:getItemNames()
-    setmetatable(obj, FoodItemContentsDecider)
-    return obj
-end
-function FoodItemContentsDecider:containsLactose()
-    return self:howManyLactoseIngredients() >= 1
-end
-function FoodItemContentsDecider:howManyLactoseIngredients()
-    local count = 0
-    for i, food_name in ipairs(self.relevant_item_names) do
-        if lactoseIntolerant.foodNameContainsLactose(food_name) then
-        count = count + 1
-    end
-    end
-    return count
-end
-
-
----------------------------------------------------------------
----------------- Class RealizedFoodContents -------------------
----------------------------------------------------------------
---- food contents are the actual items that the player is
---  eating instead of the summarized representation
---  For example, for a stiry fry made of cheese and meat
---  it will simply list the items
---- PRO: allows me to do the unwrapping of inventory items in one place
--- CON: not much, kind of hard to understand what this does
-
-RealizedFoodContents = {}
-function RealizedFoodContents:new(item)
-    -- inventoryItem: The item from the context menu
-    -- menu
-    obj = {}
-    obj.inventoryItem = item
-    setmetatable(obj, self)
-    self.__index = self
-    return obj
-end
-
-function RealizedFoodContents:gatherBaseItems()
-    local haveExtraItems = self.inventoryItem:haveExtraItems()
-    if haveExtraItems then
-        local extraItems = self.inventoryItem:getExtraItems()
-        return lactoseIntolerant.zombListToLuaArray(extraItems)
-    end
-    return {self.inventoryItem}
-end
-
-function RealizedFoodContents:getItemNames()
-    local names = {}
-    for i, item in pairs(self:gatherBaseItems()) do
-        names[i] = item:getName()
-    end
-    return names
-end
-
----------------------------------------------------------------
