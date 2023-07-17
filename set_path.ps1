@@ -1,1 +1,2 @@
-$env:LUA_PATH = "C:\Users\Bryce\lactoseIntrolerantMod\lactoseIntolerant\media\lua\client\?.lua;C:\Users\Bryce\lactoseIntrolerantMod\?.lua"
+$dirname=(Get-Item -Path '.\' -Verbose).FullName
+$env:LUA_PATH = "$dirname\lactoseIntolerant\media\lua\client\?.lua;$dirname\lactoseIntolerant\media\lua\shared\?.lua;$dirname\lactoseIntolerant\media\lua\server\?.lua;$dirname\?.lua"
