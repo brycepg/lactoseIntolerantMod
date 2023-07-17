@@ -17,6 +17,8 @@ assert( lactoseIntolerant.foodNameContainsLactose("dairy-free milk") == false )
 
 assert( lactoseIntolerant.Interp("hi ${name}", {name="bob"})  == "hi bob" )
 assert( lactoseIntolerant.Interp("hi", {name="bob"})  == "hi" )
+print( lactoseIntolerant.Interp("my age is ${age}", {age=1}))
+assert( lactoseIntolerant.Interp("my age is ${age}", {age=1})  == "my age is 1" )
 
 assert (type(math.random(1, 5)) == type(5))
 math.randomseed(os.time())
@@ -24,7 +26,7 @@ assert(lactoseIntolerant.choosePhrase(math.random) ~= nil)
 function noRandomMin(min, max)
     return min
 end
-assert(lactoseIntolerant.calculateNewFoodSicknessLevel(0, 1, noRandomMin) == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
+assert(lactoseIntolerant.calculateNewFoodSicknessLevel(0, 1, noRandomMin) == lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA)
 
 itemWithoutCheese = TestItem:new("foo")
 item2 = TestItem:new("cheese figurine")
@@ -39,7 +41,7 @@ ZombRand = function(min, max)
     return min
 end
 newValue = lactoseIntolerant.calculateNewFoodSicknessLevelList(testItemList, 1, 0)
-assert(newValue == lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)
+assert(newValue == lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA)
 
 item3 = TestItem:new("cheese2")
 
@@ -49,7 +51,7 @@ testItemListTwoIngredients = {
     item3,
 }
 newValue = lactoseIntolerant.calculateNewFoodSicknessLevelList(testItemListTwoIngredients, 1, 0)
-assert(newValue == (lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA)*2)
+assert(newValue == (lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA)*2)
 
 -- todo test interpolated phrases
 --
@@ -81,7 +83,7 @@ function test_food_sickness_calculator_with_lactose()
     local item3 = TestItem:new("cheese cat")
     local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
-    local should_be_new = lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA
+    local should_be_new = lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA
     assert(new_sickness_level == should_be_new)
 end
 
@@ -99,7 +101,7 @@ function test_food_sickness_calculator_with_extra_items()
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(
         original_sickness, FULLPERCENTAGE
     )
-    local expected = (lactoseIntolerant.LACTOSE_ITEM_SICKNESS_BASE + lactoseIntolerant.NEW_FOOD_SICKNESS_MIN_RAND_EXTRA) * 2
+    local expected = (lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA) * 2
     print("lactose count: " .. tostring(food_sickness_calculator.food_item_contents_decider:howManyLactoseIngredients()))
     print("new: " .. tostring(new_sickness_level))
     assert(new_sickness_level == expected)

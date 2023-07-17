@@ -53,9 +53,9 @@ lactoseIntolerant.phrases = {
     "Fuck not dairy again",
     "Well I'm gonna spend an evening on the toilet again thanks asshole",
     "There's gonna be a war zone in my asshole",
-    "${age} years old and to think I'd learn not to eat dairy",
     "I'm gonna be shaking off farts for the next hour",
     "It's not just any cow.. it's a dairy cow",
+    -- "${age} years old and to think I'd learn not to eat dairy",
 }
 
 ------------------------- Testing -----------------------------
