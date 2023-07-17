@@ -27,7 +27,7 @@ function lactoseIntolerant.getMultiplier(
     if (currentFoodSicknessLevel >
         lactoseIntolerant.SICKNESS_REDUCTION_THRESHOLD
             ) then
-        return (base *
+        return (lactoseIntolerant.SICKNESS_BASE *
             lactoseIntolerant.REDUCTION_THRESHOLD_MULTIPLIER)
     end
     return 1
@@ -67,7 +67,7 @@ if not ZombRand and lactoseIntolerant.DEBUG then
     end
     print("ZombRand is not defined.. defining for testing")
     ZombRand = function(min, max)
-        math.random(min, max)
+        return math.random(min, max)
     end
 end
 
