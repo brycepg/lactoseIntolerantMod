@@ -1,6 +1,12 @@
 version=1
 id=3004329413
 title=Lactose Intolerant Trait
-description=Adds a lactose intolerant trait which makes the player sick if they consume dairy food
+description=Adds a lactose intolerant trait (+1) which makes the player very sick if they consume dairy food
+description=
+description=Currently only tested on single player
+description=
+description=
+description=Buy me a coffee: https://ko-fi.com/azrathud
+description=Commissions: https://ko-fi.com/azrathud/commissions
 tags=Build 41;Food;Silly/Fun;Traits
 visibility=public
