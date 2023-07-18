@@ -214,52 +214,13 @@ function lactoseIntolerant.Interp(s, tab)
     return (s:gsub('($%b{})', function(w) return tab[w:sub(3, -2)] or w end))
 end
 
----------------------------------------------------------------
-
---------------------Sickness aggregation classes---------------
--- These classes streamline the checking of food items
--- for dairy and subsequent sickness calculations
-
---- XXX if I make this class local can I still test it?
---- otherwise I need to namespace or rename it
----------------------------------------------------------------
------------------ Class FoodSicknessCalculator ----------------
----------------------------------------------------------------
-            -- for both single and multiple items items
-            -- knows whether to say phrase or not
-            -- pro: encapulate food sickness calculations
-            -- pro: encapulate sending phrase message state
-            -- pro: more testable
-            -- con: extra code, have to change working code
-            -- con: disposable class creation every single time
-            -- implement shouldSayPhrase() ?
-FoodSicknessCalculator = {}
-FoodSicknessCalculator.__index = FoodSicknessCalculator
-
-function FoodSicknessCalculator:new(food_item_contents_decider)
-    -- item: an zomboid InventoryItem
-    -- to decide over
-    local obj = {}
-    setmetatable(obj, FoodSicknessCalculator)
-    obj.food_item_contents_decider = food_item_contents_decider
-    return obj
-end
-
-function FoodSicknessCalculator:from_item(item)
+function foodSicknessCalculatorForLactose(item)
+    --- What would be a good way to simplify class layout?
+    --- RealizedFoodContents work very well
     realized_food_contents = RealizedFoodContents:new(item)
     item_contents_decider = FoodItemContentsDecider:new(realized_food_contents, lactoseIntolerant.foodNameContainsLactose)
-    food_sickness_calculator = self:new(item_contents_decider)
+    food_sickness_calculator = LactoseFoodSicknessCalculator:new(item_contents_decider)
     return food_sickness_calculator
 end
 
-function FoodSicknessCalculator:doesItemInduceSickness()
-    -- boolean: if true the food does induce sickness
-    return self.food_item_contents_decider:containsFoodNameMatch()
-end
-
-function FoodSicknessCalculator:calculateNewSicknessLevel(oldFoodSicknessLevel, percentage)
-    if not self:doesItemInduceSickness() then
-        return oldFoodSicknessLevel
-    end
-    return lactoseIntolerant.calculateNewFoodSicknessCount(self.food_item_contents_decider:howManyMatchingIngredients(), oldFoodSicknessLevel, percentage)
-end
+LactoseFoodSicknessCalculator = FoodSicknessCalculator:factory(lactoseIntolerant.calculateNewFoodSicknessCount)

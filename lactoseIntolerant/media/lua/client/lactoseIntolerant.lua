@@ -38,7 +38,7 @@ function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, 
         ------------------ Sickness calculation ---------------
         local bodyDamage = playerObj:getBodyDamage()
         local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-        local fsc = FoodSicknessCalculator:from_item(item)
+        local fsc = foodSicknessCalculatorForLactose(item)
         local newSicknessLevel = fsc:calculateNewSicknessLevel(
             oldFoodSicknessLevel, percentage
         )

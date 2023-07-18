@@ -66,7 +66,7 @@ function test_food_sickness_calculator_no_lactose()
     -- should be the same value given
     local original_sickness = 69
     local item3 = TestItem:new("butt sauce")
-    local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
     print("osl: " .. tostring(original_sickness))
     print("nsl: " .. tostring(new_sickness_level))
@@ -81,9 +81,10 @@ function test_food_sickness_calculator_with_lactose()
     -- should be the same value given
     local original_sickness = 0
     local item3 = TestItem:new("cheese cat")
-    local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
     local should_be_new = lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA
+    print("new should", new_sickness_level, should_be_new)
     assert(new_sickness_level == should_be_new)
 end
 
@@ -97,7 +98,7 @@ function test_food_sickness_calculator_with_extra_items()
     local extraItems3 = TestItem:new("butter")
     local exi = ExtraItems:new{extraItems1, extraItems2, extraItems3}
     local item = TestItemWithExtraItems:new("stiry fry rymdreglage", exi)
-    local food_sickness_calculator = FoodSicknessCalculator:from_item(item)
+    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(
         original_sickness, FULLPERCENTAGE
     )
@@ -106,7 +107,7 @@ function test_food_sickness_calculator_with_extra_items()
     print("new: " .. tostring(new_sickness_level))
     assert(new_sickness_level == expected)
 
-    local fsc = FoodSicknessCalculator:from_item(item)
+    local fsc = foodSicknessCalculatorForLactose(item)
     oldFoodSicknessLevel = original_sickness
     percentage = FULLPERCENTAGE
     newSicknessLevel = fsc:calculateNewSicknessLevel(
