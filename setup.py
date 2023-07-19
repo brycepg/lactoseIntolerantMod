@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """
-Setup all symlinks to home directory for these dotfiles.
+Setup all symlinks to home directory
 
 1 Backup files already present.
 2 Remove broken symlinks
 3 Setup symlink
 
-This file assumes it's in the base directory if dotfiles
+Relative to current directory
 """
 
 from itertools import count
@@ -34,7 +34,10 @@ DOTFILE_DIR = dirname(realpath(__file__))
 
 # Change this to configure the symlink mapping
 DOTFILE_TO_HOME = (
+    ('lactoseIntolerant', 'Zomboid/Workshop/lactoseIntrolerantTrait/Content/lactoseIntolerant'),
     ('lactoseIntolerant', 'Zomboid/mods/lactoseIntolerant'),
+    ('workshop.txt', 'Zomboid/Workshop/lactoseIntrolerantTrait/workshop.txt'),
+    ('description.txt', 'Zomboid/Workshop/lactoseIntrolerantTrait/description.txt'),
 )
 
 def main(symlink_pair, cur_dir):
