@@ -1,7 +1,10 @@
 -- luarocks is not working on my system so no luatest
 require "lactoseIntolerantCore"
 require "testUtils"
+F = require("F")
 
+num = 1
+assert(F("{num}a") == "1a")
 lactoseIntolerant.DEBUG = true
 FULLPERCENTAGE = 1
 

@@ -1,4 +1,5 @@
 require "genericFoodIntolerance"
+F = require("F")
 
 -- file contains core code which doesn't depend on the
 -- zomboid API
@@ -53,6 +54,7 @@ lactoseIntolerant.NO_PHRASE_CHANCE = 20
 
 -- add to the bottom or edit tests
 lactoseIntolerant.phrases = {
+    "{age} years old and to think I'd learn not to eat dairy",
     "This food is making my tummy all rumbly",
     "Uhh didn't you know i'm lactose intolerant?",
     "...",
@@ -62,7 +64,6 @@ lactoseIntolerant.phrases = {
     "I'm gonna be shaking off farts for the next hour",
     "It's not just any cow.. it's a dairy cow",
     -- Interp tests pass but I have an error during execution.. WHY?
-    -- "${age} years old and to think I'd learn not to eat dairy",
 }
 
 ------------------------- Testing -----------------------------
@@ -198,10 +199,20 @@ function lactoseIntolerant.choosePhrase(randfunc)
 end
 
 
-function lactoseIntolerant.choosePhraseWithInterp(info_table)
+function lactoseIntolerant._choosePhraseWithInterp(info_table)
   local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
   if chosenPhrase then
       return lactoseIntolerant.Interp(chosenPhrase, info_table)
+  end
+  return ""
+end
+
+function lactoseIntolerant.choosePhraseWithInterp(info_table)
+  local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
+  if chosenPhrase then
+      local age = info_table.age
+      local name = info_table.name
+      return F(chosenPhrase)
   end
   return ""
 end
