@@ -30,8 +30,7 @@ function lactoseIntolerant.getMultiplier(
     if (currentFoodSicknessLevel >
         lactoseIntolerant.SICKNESS_REDUCTION_THRESHOLD
             ) then
-        return (lactoseIntolerant.SICKNESS_BASE *
-            lactoseIntolerant.REDUCTION_THRESHOLD_MULTIPLIER)
+        return (lactoseIntolerant.REDUCTION_THRESHOLD_MULTIPLIER)
     end
     return 1
 end
@@ -187,9 +186,8 @@ function lactoseIntolerant.skipPhraseChance(randfunc)
     return false
 end
 
+
 function lactoseIntolerant.choosePhrase(randfunc)
-    -- XXX: remove randfunc
-    -- choose phrase for player to say
     local index = randfunc(0, #lactoseIntolerant.phrases)
     if lactoseIntolerant.DEBUG then
         print("chosen index: " .. tostring(index))
@@ -212,11 +210,13 @@ function lactoseIntolerant.choosePhraseWithInterp(info_table)
   if chosenPhrase then
       local age = info_table.age
       local name = info_table.name
+      local item = info_table.item
       return F(chosenPhrase)
   end
   return ""
 end
 
+-- had some issues with this function
 function lactoseIntolerant.Interp(s, tab)
     -- interpolation for characters with variable dollar sign braces interpolation
     -- example: lactoseIntolerant.Interp("a: ${foo}", {foo="bar"}) == "a: bar"

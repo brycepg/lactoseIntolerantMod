@@ -14,6 +14,7 @@ end
 
 
 function genericFoodIntolerance.containsExceptingKeyword(foodName, exceptingTable)
+    -- negate the positive match if it contains an excepting keyword
     for i = 1, #exceptingTable do
         match = string.find(foodName, exceptingTable[i])
         if match ~= nil then
@@ -195,5 +196,3 @@ function RealizedFoodContents:getItemNames()
     end
     return names
 end
-
----------------------------------------------------------------

@@ -16,64 +16,78 @@ require 'lactoseIntolerantCore'
 -- DONE: playtest allow phrases to be disableable
 
 
---------------------------------------------------------------
--------------------- Function override -----------------------
---------------------------------------------------------------
-
+--- XXX look into replacing this hook with a more robust one
 local old_eatmenu = ISInventoryPaneContextMenu.eatItem
-local lactoseIntolerantOverrideSet = false
 
 
-function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, player)
+function lactoseIntolerant.eatItemHook(item, percentage, player)
         old_eatmenu(item, percentage, player)
         local playerObj = getPlayer(player)
         if not playerObj:HasTrait("lactoseIntolerant") then
-            playerObj:Say("I do not have lactose intolerance")
+            if lactoseIntolerant.DEBUG then
+                playerObj:Say("I do not have lactose intolerance")
+            end
             -- remove this check from chain, I think I can do this
             -- even with multiplayer since it is client sided code
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
+        local shouldSayPhrase = SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption
+        eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
 
-        ------------------ Sickness calculation ---------------
-        local bodyDamage = playerObj:getBodyDamage()
-        local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-        local fsc = foodSicknessCalculatorForLactose(item)
-        local newSicknessLevel = fsc:calculateNewSicknessLevel(
-            oldFoodSicknessLevel, percentage
-        )
-        if newSicknessLevel ~= oldFoodSicknessLevel then
-            bodyDamage:setFoodSicknessLevel(newSicknessLevel)
-        end
-
-        ------------------- Phrase code -----------------------
-        shouldSayPhrase = (
-            SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption and
-            newSicknessLevel > oldFoodSicknessLevel and
-            lactoseIntolerant.skipPhraseChance(ZombRand)
-        )
-        if lactoseIntolerant.DEBUG then
-            shouldSayPhrase = true
-        end
-        if shouldSayPhrase then
-             phrase_info =  lactoseIntolerant.populatePhraseInfo(
-                 playerObj, itemName
-             )
-             print("lactoseMod: AGE -> ", tostring(phrase_info.age))
-             print("lactoseMod: NAME -> ", tostring(phrase_info.name))
-             local phraseString = lactoseIntolerant.choosePhraseWithInterp(
-                 phrase_info_table
-             )
-             if phrase then
-                playerObj:Say(phrase)
-            end
-        end
 end
+
+
+function eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
+    ------------------ Sickness calculation ---------------
+    --- mock playerObj
+        --- haveExtraItems() -> bool
+        --- getExtraItems -> JavaList
+            --- size() -> number
+            --- get() number -> TestItem
+        --- getBodyDamage() -> BodyDamage
+            --- getFoodSicknessLevel() -> number
+            --- setFoodSicknessLevel() number ->
+    --- add to TestItem
+        --- getName() -> str
+    local bodyDamage = playerObj:getBodyDamage()
+    local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
+    local fsc = foodSicknessCalculatorForLactose(item)
+    local newSicknessLevel = fsc:calculateNewSicknessLevel(
+        oldFoodSicknessLevel, percentage
+    )
+    if newSicknessLevel ~= oldFoodSicknessLevel then
+        bodyDamage:setFoodSicknessLevel(newSicknessLevel)
+    end
+
+    ------------------- Phrase code -----------------------
+    shouldSayPhrase = (
+        shouldSayPhrase and
+        newSicknessLevel > oldFoodSicknessLevel and
+        lactoseIntolerant.skipPhraseChance(ZombRand)
+    )
+    if lactoseIntolerant.DEBUG then
+        print("lactoseMod: AGE -> ", tostring(phrase_info.age))
+        print("lactoseMod: NAME -> ", tostring(phrase_info.name))
+        shouldSayPhrase = true
+    end
+    if shouldSayPhrase then
+         phrase_info =  lactoseIntolerant.populatePhraseInfo(
+             playerObj, item:getName()
+         )
+         local phraseString = lactoseIntolerant.choosePhraseWithInterp(
+             phrase_info
+         )
+         if phraseString then
+            playerObj:Say(phraseString)
+        end
+    end
+end
+
 
 function lactoseIntolerant.overrideEatItem()
-    ISInventoryPaneContextMenu.eatItem = lactoseIntolerant.eatItemWithLactoseIntoleranceTrait
+    ISInventoryPaneContextMenu.eatItem = lactoseIntolerant.eatItemHook
 end
-
 
 --------------------------------------------------------------
 ----------------------- Trait registration  ------------------
@@ -99,11 +113,5 @@ end
 -- 2. trait registration
 -- This allows the trait to show up during character selection
 
-if not lactoseIntolerantOverrideSet then
-    -- Is only boot needed?
-    Events.OnGameBoot.Add(lactoseIntolerant.overrideEatItem)
-    Events.OnGameBoot.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
-    -- allow override
-    -- XXX: uncomment before release
-    -- lactoseIntolerantOverrideSet = true
-end
+Events.OnGameBoot.Add(lactoseIntolerant.overrideEatItem)
+Events.OnGameBoot.Add(lactoseIntolerant.registerLactoseIntoleranceTrait)
