@@ -60,3 +60,52 @@ function TestItemWithExtraItems:getExtraItems()
 end
 
 TestItemWithExtraItems.getName = TestItem.getName
+
+PlayerObj = {}
+function PlayerObj:new(foodSicknessLevel, age, name)
+    obj = {}
+    setmetatable(obj, PlayerObj)
+    self.__index = PlayerObj
+    self.sayOutput = {}
+    self.age = age
+    self.name = name
+    self._bodyDamage = BodyDamage:new(foodSicknessLevel)
+    return self
+end
+
+function PlayerObj:Say(sayString)
+    table.insert(self.sayOutput, sayString)
+end
+
+function PlayerObj:getBodyDamage()
+    print("fsl", self.foodSicknessLevel)
+    return self._bodyDamage
+end
+
+function PlayerObj:getAge()
+    return self.age
+end
+
+function PlayerObj:getForname()
+    return self.name
+end
+
+BodyDamage = {}
+function BodyDamage:new(foodSicknessLevel)
+    obj = {}
+    setmetatable(obj, self)
+    self.__index = self
+    self.foodSicknessLevel = foodSicknessLevel
+    print("fsl bd", self.foodSicknessLevel)
+    return obj
+end
+
+function BodyDamage:getFoodSicknessLevel()
+    print("get fsl  bd", self.foodSicknessLevel)
+    return self.foodSicknessLevel
+end
+
+function BodyDamage:setFoodSicknessLevel(foodSicknessLevel)
+    print("set fsl  bd", foodSicknessLevel)
+    self.foodSicknessLevel = foodSicknessLevel
+end

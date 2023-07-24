@@ -119,3 +119,15 @@ function test_food_sickness_calculator_with_extra_items()
 end
 
 test_food_sickness_calculator_with_extra_items()
+
+function testEatItemWithLactoseIntolerantTraitExtraItems()
+    local initfoodSicknessLevel = 0
+    local playerObj = PlayerObj:new(initfoodSicknessLevel, 27, "hairy")
+    local item = TestItemWithExtraItems:new("stiry fry rymdreglage", ExtraItems:new{TestItem:new("cheese"), TestItem:new("butter")})
+    local shouldSayPhrase = true
+    eatItemWithLactoseIntoleranceTrait(item, 1, PlayerObj, shouldSayPhrase)
+    print("new food sickness level", playerObj:getBodyDamage():getFoodSicknessLevel())
+    assert(playerObj:getBodyDamage():getFoodSicknessLevel() > initfoodSicknessLevel)
+end
+
+testEatItemWithLactoseIntolerantTraitExtraItems()

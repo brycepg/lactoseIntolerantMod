@@ -22,3 +22,7 @@ assert( itemWExtraItems:getName() == NAME )
 -- if there are none
 assert( itemWExtraItems:getExtraItems():size() == 1 )
 assert( itemWExtraItems:haveExtraItems() == true )
+
+playerObj = PlayerObj:new(50)
+bodyDamage = playerObj:getBodyDamage()
+assert(bodyDamage:getFoodSicknessLevel() == 50)

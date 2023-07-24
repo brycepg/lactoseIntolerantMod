@@ -32,56 +32,9 @@ function lactoseIntolerant.eatItemHook(item, percentage, player)
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
-        local shouldSayPhrase = SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption
+        local shouldSayPhrase = SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption and lactoseIntolerant.sayPhraseChance(ZombRand)
         eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
 
-end
-
-
-function eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
-    ------------------ Sickness calculation ---------------
-    --- mock playerObj
-        --- haveExtraItems() -> bool
-        --- getExtraItems -> JavaList
-            --- size() -> number
-            --- get() number -> TestItem
-        --- getBodyDamage() -> BodyDamage
-            --- getFoodSicknessLevel() -> number
-            --- setFoodSicknessLevel() number ->
-    --- add to TestItem
-        --- getName() -> str
-    local bodyDamage = playerObj:getBodyDamage()
-    local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-    local fsc = foodSicknessCalculatorForLactose(item)
-    local newSicknessLevel = fsc:calculateNewSicknessLevel(
-        oldFoodSicknessLevel, percentage
-    )
-    if newSicknessLevel ~= oldFoodSicknessLevel then
-        bodyDamage:setFoodSicknessLevel(newSicknessLevel)
-    end
-
-    ------------------- Phrase code -----------------------
-    shouldSayPhrase = (
-        shouldSayPhrase and
-        newSicknessLevel > oldFoodSicknessLevel and
-        lactoseIntolerant.skipPhraseChance(ZombRand)
-    )
-    if lactoseIntolerant.DEBUG then
-        print("lactoseMod: AGE -> ", tostring(phrase_info.age))
-        print("lactoseMod: NAME -> ", tostring(phrase_info.name))
-        shouldSayPhrase = true
-    end
-    if shouldSayPhrase then
-         phrase_info =  lactoseIntolerant.populatePhraseInfo(
-             playerObj, item:getName()
-         )
-         local phraseString = lactoseIntolerant.choosePhraseWithInterp(
-             phrase_info
-         )
-         if phraseString then
-            playerObj:Say(phraseString)
-        end
-    end
 end
 
 

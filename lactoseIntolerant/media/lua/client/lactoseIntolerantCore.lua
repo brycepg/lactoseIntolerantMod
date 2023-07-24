@@ -18,16 +18,16 @@ lactoseIntolerant.DEBUG = true
 
 ------------------ Sickness calculation config ----------------
 -- possible sickness delta is (BASE-MIN to BASE+MAX-1)
-lactoseIntolerant.SICKNESS_BASE = 50
-lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA = 0
-lactoseIntolerant.NEW_SICKNESS_MAX_RAND_EXTRA = 20
-lactoseIntolerant.SICKNESS_REDUCTION_THRESHOLD = 70
+lactoseIntolerant.SICKNESS_BASE = 40
+lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA = -5
+lactoseIntolerant.NEW_SICKNESS_MAX_RAND_EXTRA = 10
+lactoseIntolerant.SICKNESS_REDUCTION_THRESHOLD = 50
 lactoseIntolerant.REDUCTION_THRESHOLD_MULTIPLIER = 0.5
 
 function lactoseIntolerant.getMultiplier(
         currentFoodSicknessLevel)
     -- Feel effects more immediately for the player, and then back off additive sickness
-    if (currentFoodSicknessLevel >
+    if (currentFoodSicknessLevel >=
         lactoseIntolerant.SICKNESS_REDUCTION_THRESHOLD
             ) then
         return (lactoseIntolerant.REDUCTION_THRESHOLD_MULTIPLIER)
@@ -41,7 +41,7 @@ end
 lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake", "nutella"}
 
 -- If the item name matches with the above substrings, except it if it matches any of the below substrings
-lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate"}
+lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate", "peanut"}
 -- Chance that a player will not say anything when eating lactose
 
 lactoseIntolerant.FOODS_WITH_GLUTEN = {"baguette", "biscuit", "cake", "cereal", "bread", "pão", "burrito", "sandwich", "nuggets", "cornbread", "corndog", "croissant", "cupcake", "doughnut", "muffin", "dumpling", "noodle soup", "pancakes", "perogies", "pie", "pizza", "bagel", "taco", "tortilla", "waffles", "cinnamon roll", "cone", "crackers", "ramen", "flour", "gravy", "pasta", "pretzel", "beer"}
@@ -49,7 +49,7 @@ lactoseIntolerant.NON_GLUENT_KEYWORDS = {"gluent[ -]free", "potato pancakes"}
 
 
 ------------------- Phrase configuration ----------------------
-lactoseIntolerant.NO_PHRASE_CHANCE = 20
+lactoseIntolerant.NO_PHRASE_CHANCE = 30
 
 -- add to the bottom or edit tests
 lactoseIntolerant.phrases = {
@@ -62,6 +62,8 @@ lactoseIntolerant.phrases = {
     "There's gonna be a war zone in my asshole",
     "I'm gonna be shaking off farts for the next hour",
     "It's not just any cow.. it's a dairy cow",
+    "Goddamnit {name}",
+    "No more {item} PLEASE",
     -- Interp tests pass but I have an error during execution.. WHY?
 }
 
@@ -80,10 +82,65 @@ if not ZombRand and lactoseIntolerant.DEBUG then
 end
 
 
-
 ---------------------------------------------------------------
 ------------------------- functions ---------------------------
 ---------------------------------------------------------------
+
+function eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
+    --- mock playerObj
+        --- haveExtraItems() -> bool
+        --- getExtraItems -> JavaList
+            --- size() -> number
+            --- get() number -> TestItem
+        --- getBodyDamage() -> BodyDamage
+            --- getFoodSicknessLevel() -> number
+            --- setFoodSicknessLevel() number ->
+    --- add to TestItem
+        --- getName() -> str
+
+    ------------------ Sickness calculation ---------------
+    local bodyDamage = playerObj:getBodyDamage()
+    local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
+    local fsc = foodSicknessCalculatorForLactose(item)
+    local newSicknessLevel = fsc:calculateNewSicknessLevel(
+        oldFoodSicknessLevel, percentage
+    )
+    if lactoseIntolerant.DEBUG then
+        print("---")
+        print("old food sickness level: " .. oldFoodSicknessLevel)
+        print("new food sickness level: " .. newSicknessLevel)
+    end
+    if newSicknessLevel ~= oldFoodSicknessLevel then
+        bodyDamage:setFoodSicknessLevel(newSicknessLevel)
+    end
+
+    ------------------- Phrase code -----------------------
+    shouldSayPhrase = (
+        shouldSayPhrase and
+        newSicknessLevel > oldFoodSicknessLevel
+    )
+    phrase_info =  lactoseIntolerant.populatePhraseInfo(
+        playerObj, item:getName()
+    )
+    if lactoseIntolerant.DEBUG then
+        print("should say phrase: ", shouldSayPhrase)
+        print("lactoseMod: AGE -> ", tostring(phrase_info.age))
+        print("lactoseMod: NAME -> ", tostring(phrase_info.name))
+    end
+    if shouldSayPhrase then
+         local phraseString = lactoseIntolerant.choosePhraseWithInterp(
+             phrase_info
+         )
+         if phraseString then
+            playerObj:Say(phraseString)
+        else
+            if lactoseIntolerant.DEBUG then
+                playerObj:Say("No phrase string")
+            end
+        end
+    end
+end
+
 
 --------------------Food identification -----------------------
 -- For identifying food as dairy as not
@@ -99,7 +156,6 @@ end
 
 
 -------------------------sickness calculation------------------
-
 function lactoseIntolerant.calculateNewFoodSicknessCount(count, oldFoodSicknessLevel, percentage)
     -- calculate new food sickness level for multiple items
     -- count(number): number of items which induce sickenss
@@ -109,7 +165,6 @@ function lactoseIntolerant.calculateNewFoodSicknessCount(count, oldFoodSicknessL
     i = 0
     -- print("count: " .. tostring(count))
     while i < count do
-        -- print("i: " .. tostring(i))
         curFoodSicknessLevel = lactoseIntolerant.calculateNewFoodSicknessLevel(curFoodSicknessLevel, percentage, ZombRand)
         i = i + 1
     end
@@ -173,22 +228,22 @@ end
 function lactoseIntolerant.populatePhraseInfo(playerObj, itemName)
      local phrase_info_table = {}
      phrase_info_table.age = tostring(playerObj:getAge())
-     phrase_info_table.name = playerObj:getName()
+     phrase_info_table.name = playerObj:getForname()
      phrase_info_table.item = itemName
      return phrase_info_table
 end
 
 
-function lactoseIntolerant.skipPhraseChance(randfunc)
+function lactoseIntolerant.sayPhraseChance(randfunc)
     if randfunc(0, 99) < lactoseIntolerant.NO_PHRASE_CHANCE then
-        return true
+        return false
     end
-    return false
+    return true
 end
 
 
 function lactoseIntolerant.choosePhrase(randfunc)
-    local index = randfunc(0, #lactoseIntolerant.phrases)
+    local index = randfunc(1, #lactoseIntolerant.phrases+1)
     if lactoseIntolerant.DEBUG then
         print("chosen index: " .. tostring(index))
     end
@@ -206,14 +261,23 @@ function lactoseIntolerant._choosePhraseWithInterp(info_table)
 end
 
 function lactoseIntolerant.choosePhraseWithInterp(info_table)
-  local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
-  if chosenPhrase then
-      local age = info_table.age
-      local name = info_table.name
-      local item = info_table.item
-      return F(chosenPhrase)
-  end
-  return ""
+    local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
+    return  interpolateInfoTable(chosenPhrase, info_table)
+
+
+
+end
+
+function interpolateInfoTable(chosenPhraseTemplate, info_table)
+    local chosenPhrase = chosenPhraseTemplate
+    for key, value in pairs(info_table) do
+        if lactoseIntolerant.DEBUG then
+            print("key: " .. key .. " value: " .. value)
+        end
+        local keymarker = string.format("{%s}", key)
+        chosenPhrase = string.gsub(chosenPhrase, keymarker, value)
+    end
+    return chosenPhrase
 end
 
 -- had some issues with this function
