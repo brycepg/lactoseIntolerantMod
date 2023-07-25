@@ -4,7 +4,7 @@ require 'testUtils'
 NAME1 = "foo"
 item = TestItem:new(NAME1)
 print(item.name)
-rfc = RealizedFoodContents:new(item)
+rfc = genericFoodIntolerance.RealizedFoodContents:new(item)
 assert(item.name == NAME1)
 ii = rfc["inventoryItem"]
 for key, _ in pairs(ii) do
@@ -27,7 +27,7 @@ extraItems2 = TestItem:new("bam")
 exi = ExtraItems:new{extraItems1, extraItems2}
 iNAME2 = TestItemWithExtraItems:new(NAME2, exi)
 print("hve extra items", iNAME2:haveExtraItems())
-rfc2 = RealizedFoodContents:new(iNAME2)
+rfc2 = genericFoodIntolerance.RealizedFoodContents:new(iNAME2)
 base_items = rfc2:gatherBaseItems()
 print("base items" .. tostring(base_items))
 -- base items empty only when have extra items is true
@@ -44,4 +44,3 @@ function str_array(arr)
     return result
 end
 print("b" .. str_array( rfc2:getItemNames()))
-

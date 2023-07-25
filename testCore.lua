@@ -1,10 +1,7 @@
 -- luarocks is not working on my system so no luatest
 require "lactoseIntolerantCore"
 require "testUtils"
-F = require("F")
 
-num = 1
-assert(F("{num}a") == "1a")
 lactoseIntolerant.DEBUG = true
 FULLPERCENTAGE = 1
 
@@ -18,10 +15,10 @@ assert( lactoseIntolerant.foodNameContainsLactose("oat milk") == false )
 assert( lactoseIntolerant.foodNameContainsLactose("dairy free milk") == false )
 assert( lactoseIntolerant.foodNameContainsLactose("dairy-free milk") == false )
 
-assert( lactoseIntolerant.Interp("hi ${name}", {name="bob"})  == "hi bob" )
-assert( lactoseIntolerant.Interp("hi", {name="bob"})  == "hi" )
-print( lactoseIntolerant.Interp("my age is ${age}", {age=1}))
-assert( lactoseIntolerant.Interp("my age is ${age}", {age=1})  == "my age is 1" )
+assert( lactoseIntolerant.interpolateInfoTable("hi {name}", {name="bob"})  == "hi bob" )
+assert( lactoseIntolerant.interpolateInfoTable("hi", {name="bob"})  == "hi" )
+print( lactoseIntolerant.interpolateInfoTable("my age is {age}", {age=1}))
+assert( lactoseIntolerant.interpolateInfoTable("my age is {age}", {age=1})  == "my age is 1" )
 
 assert (type(math.random(1, 5)) == type(5))
 math.randomseed(os.time())
@@ -59,8 +56,8 @@ assert(newValue == (lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICK
 -- todo test interpolated phrases
 --
 
-rfcwocheese = RealizedFoodContents:new(itemWithoutCheese)
-itemWithoutCheeseContentsDecider = FoodItemContentsDecider:new(rfcwocheese, lactoseIntolerant.foodNameContainsLactose)
+rfcwocheese = genericFoodIntolerance.RealizedFoodContents:new(itemWithoutCheese)
+itemWithoutCheeseContentsDecider = genericFoodIntolerance.FoodItemContentsDecider:new(rfcwocheese, lactoseIntolerant.foodNameContainsLactose)
 assert(itemWithoutCheeseContentsDecider:howManyMatchingIngredients() == 0)
 
 
@@ -69,7 +66,7 @@ function test_food_sickness_calculator_no_lactose()
     -- should be the same value given
     local original_sickness = 69
     local item3 = TestItem:new("butt sauce")
-    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
+    local food_sickness_calculator = lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
     print("osl: " .. tostring(original_sickness))
     print("nsl: " .. tostring(new_sickness_level))
@@ -84,7 +81,7 @@ function test_food_sickness_calculator_with_lactose()
     -- should be the same value given
     local original_sickness = 0
     local item3 = TestItem:new("cheese cat")
-    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
+    local food_sickness_calculator = lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(original_sickness, FULLPERCENTAGE)
     local should_be_new = lactoseIntolerant.SICKNESS_BASE + lactoseIntolerant.NEW_SICKNESS_MIN_RAND_EXTRA
     print("new should", new_sickness_level, should_be_new)
@@ -101,7 +98,7 @@ function test_food_sickness_calculator_with_extra_items()
     local extraItems3 = TestItem:new("butter")
     local exi = ExtraItems:new{extraItems1, extraItems2, extraItems3}
     local item = TestItemWithExtraItems:new("stiry fry rymdreglage", exi)
-    local food_sickness_calculator = foodSicknessCalculatorForLactose(item)
+    local food_sickness_calculator = lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     local new_sickness_level = food_sickness_calculator:calculateNewSicknessLevel(
         original_sickness, FULLPERCENTAGE
     )
@@ -110,7 +107,7 @@ function test_food_sickness_calculator_with_extra_items()
     print("new: " .. tostring(new_sickness_level))
     assert(new_sickness_level == expected)
 
-    local fsc = foodSicknessCalculatorForLactose(item)
+    local fsc = lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     oldFoodSicknessLevel = original_sickness
     percentage = FULLPERCENTAGE
     newSicknessLevel = fsc:calculateNewSicknessLevel(
@@ -125,7 +122,7 @@ function testEatItemWithLactoseIntolerantTraitExtraItems()
     local playerObj = PlayerObj:new(initfoodSicknessLevel, 27, "hairy")
     local item = TestItemWithExtraItems:new("stiry fry rymdreglage", ExtraItems:new{TestItem:new("cheese"), TestItem:new("butter")})
     local shouldSayPhrase = true
-    eatItemWithLactoseIntoleranceTrait(item, 1, PlayerObj, shouldSayPhrase)
+    lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, 1, PlayerObj, shouldSayPhrase)
     print("new food sickness level", playerObj:getBodyDamage():getFoodSicknessLevel())
     assert(playerObj:getBodyDamage():getFoodSicknessLevel() > initfoodSicknessLevel)
 end

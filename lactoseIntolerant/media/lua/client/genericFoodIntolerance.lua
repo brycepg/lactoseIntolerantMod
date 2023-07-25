@@ -49,6 +49,7 @@ function genericFoodIntolerance.foodNameMatches(foodName, inclusiveTable, exclus
     return food_with_match
 end
 
+
 function genericFoodIntolerance.printTable(tbl, indent)
     indent = indent or 0
 
@@ -56,7 +57,7 @@ function genericFoodIntolerance.printTable(tbl, indent)
         local formattedKey = tostring(key)
         if type(value) == "table" then
                 print(string.rep("  ", indent) .. formattedKey .. " = {")
-            printTable(value, indent + 1)
+            genericFoodIntolerance.printTable(value, indent + 1)
             print(string.rep("  ", indent) .. "}")
         else
             local formattedValue = tostring(value)
@@ -64,6 +65,7 @@ function genericFoodIntolerance.printTable(tbl, indent)
         end
     end
 end
+
 
 ---------------------------------------------------------------
 --------------------Sickness aggregation classes---------------
@@ -84,7 +86,7 @@ end
             -- con: extra code, have to change working code
             -- con: disposable class creation every single time
             -- implement shouldSayPhrase() ?
-FoodSicknessCalculator = {}
+local FoodSicknessCalculator = {}
 FoodSicknessCalculator.__index = FoodSicknessCalculator
 
 function FoodSicknessCalculator:factory(calculationFunction)
@@ -116,6 +118,7 @@ function FoodSicknessCalculator:calculateNewSicknessLevel(oldFoodSicknessLevel, 
     end
     return self.calculationFunction(self.food_item_contents_decider:howManyMatchingIngredients(), oldFoodSicknessLevel, percentage)
 end
+genericFoodIntolerance.FoodSicknessCalculator = FoodSicknessCalculator
 
 
 ---------------------------------------------------------------
@@ -127,7 +130,7 @@ end
 -- PRO: simplifies calculation code and deduplicates checks
 -- CON: harder to customize sickness level based on item name
 --
-FoodItemContentsDecider = {}
+local FoodItemContentsDecider = {}
 FoodItemContentsDecider.__index = FoodItemContentsDecider
 --- FoodNameMatcher takes a matching function and then allows you to give it a list of item names
 --- and then returns the count
@@ -157,6 +160,7 @@ function FoodItemContentsDecider:howManyMatchingIngredients()
     end
     return count
 end
+genericFoodIntolerance.FoodItemContentsDecider = FoodItemContentsDecider
 
 
 ---------------------------------------------------------------
@@ -169,7 +173,7 @@ end
 --- PRO: allows me to do the unwrapping of inventory items in one place
 -- CON: not much, kind of hard to understand what this does
 
-RealizedFoodContents = {}
+local RealizedFoodContents = {}
 function RealizedFoodContents:new(item)
     -- inventoryItem: The item from the context menu
     -- menu
@@ -196,3 +200,4 @@ function RealizedFoodContents:getItemNames()
     end
     return names
 end
+genericFoodIntolerance.RealizedFoodContents = RealizedFoodContents

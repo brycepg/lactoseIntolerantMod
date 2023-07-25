@@ -1,5 +1,4 @@
 require "genericFoodIntolerance"
-F = require("F")
 
 -- file contains core code which doesn't depend on the
 -- zomboid API
@@ -14,7 +13,7 @@ lactoseIntolerant = {}
 ---------------------------------------------------------------
 -- Tweakable variables as configuration
 
-lactoseIntolerant.DEBUG = true
+lactoseIntolerant.DEBUG = false
 
 ------------------ Sickness calculation config ----------------
 -- possible sickness delta is (BASE-MIN to BASE+MAX-1)
@@ -38,7 +37,7 @@ end
 ----------------- Food identification config ------------------
 -- note these are all subset comparisons that ingore case of the original word and support string.find regex
 -- only use lower case characters here
-lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake", "nutella"}
+lactoseIntolerant.FOODS_WITH_LACTOSE = {"milk", "cream", "yogurt", "kefir", "whey", "cheese", "ice cream", "pizza", "burger", "cake", "chocolate", "icing", "frosted doughnut", "cupcake", "cinnamon roll", "cookie", "smore", "butter", "milkshake", "nutella", "queso", "protein shake", "lasagna"}
 
 -- If the item name matches with the above substrings, except it if it matches any of the below substrings
 lactoseIntolerant.NON_LACTOSE_KEYWORDS = {"dairy[ -]free", "almond milk", "oat milk", "rice milk", "soy milk", "hemp milk", "flax milk", "cashew milk", "tiger nut milk", "without cheese", "burger patty", "imitation", "coconut milk", "dark[ -]chocolate", "peanut"}
@@ -64,11 +63,11 @@ lactoseIntolerant.phrases = {
     "It's not just any cow.. it's a dairy cow",
     "Goddamnit {name}",
     "No more {item} PLEASE",
-    -- Interp tests pass but I have an error during execution.. WHY?
 }
 
 ------------------------- Testing -----------------------------
-if not ZombRand and lactoseIntolerant.DEBUG then
+if not ZombRand then
+    lactoseIntolerant.DEBUG = true
     function setZombRand(value)
         ---@diagnostic disable-next-line: unused-local
         ZombRand = function(min, max)
@@ -86,22 +85,11 @@ end
 ------------------------- functions ---------------------------
 ---------------------------------------------------------------
 
-function eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
-    --- mock playerObj
-        --- haveExtraItems() -> bool
-        --- getExtraItems -> JavaList
-            --- size() -> number
-            --- get() number -> TestItem
-        --- getBodyDamage() -> BodyDamage
-            --- getFoodSicknessLevel() -> number
-            --- setFoodSicknessLevel() number ->
-    --- add to TestItem
-        --- getName() -> str
-
+function lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
     ------------------ Sickness calculation ---------------
     local bodyDamage = playerObj:getBodyDamage()
     local oldFoodSicknessLevel = bodyDamage:getFoodSicknessLevel()
-    local fsc = foodSicknessCalculatorForLactose(item)
+    local fsc = lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     local newSicknessLevel = fsc:calculateNewSicknessLevel(
         oldFoodSicknessLevel, percentage
     )
@@ -119,7 +107,7 @@ function eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldS
         shouldSayPhrase and
         newSicknessLevel > oldFoodSicknessLevel
     )
-    phrase_info =  lactoseIntolerant.populatePhraseInfo(
+    local phrase_info =  lactoseIntolerant.populatePhraseInfo(
         playerObj, item:getName()
     )
     if lactoseIntolerant.DEBUG then
@@ -200,8 +188,7 @@ function lactoseIntolerant.calculateNewFoodSicknessLevel(currentFoodSicknessLeve
     -- make the random function an argument to remove zomboid only function
     -- for testing
     -- returns: a float/int with of new sickness level
-
-    -- NOTE: Read from bottom to top
+    -- Read from bottom to top
 
     local multiplier = lactoseIntolerant.getMultiplier(
         currentFoodSicknessLevel
@@ -243,6 +230,9 @@ end
 
 
 function lactoseIntolerant.choosePhrase(randfunc)
+    --- Randomly choose a phrase using `randfunc`
+    --- args(func): Random func -- Zombrand for game
+    --- return(str): a phrase
     local index = randfunc(1, #lactoseIntolerant.phrases+1)
     if lactoseIntolerant.DEBUG then
         print("chosen index: " .. tostring(index))
@@ -252,23 +242,13 @@ function lactoseIntolerant.choosePhrase(randfunc)
 end
 
 
-function lactoseIntolerant._choosePhraseWithInterp(info_table)
-  local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
-  if chosenPhrase then
-      return lactoseIntolerant.Interp(chosenPhrase, info_table)
-  end
-  return ""
-end
-
 function lactoseIntolerant.choosePhraseWithInterp(info_table)
     local chosenPhrase = lactoseIntolerant.choosePhrase(ZombRand)
-    return  interpolateInfoTable(chosenPhrase, info_table)
-
-
-
+    return  lactoseIntolerant.interpolateInfoTable(chosenPhrase, info_table)
 end
 
-function interpolateInfoTable(chosenPhraseTemplate, info_table)
+
+function lactoseIntolerant.interpolateInfoTable(chosenPhraseTemplate, info_table)
     local chosenPhrase = chosenPhraseTemplate
     for key, value in pairs(info_table) do
         if lactoseIntolerant.DEBUG then
@@ -280,22 +260,14 @@ function interpolateInfoTable(chosenPhraseTemplate, info_table)
     return chosenPhrase
 end
 
--- had some issues with this function
-function lactoseIntolerant.Interp(s, tab)
-    -- interpolation for characters with variable dollar sign braces interpolation
-    -- example: lactoseIntolerant.Interp("a: ${foo}", {foo="bar"}) == "a: bar"
-    -- s(string): string with possible interpolates
-    -- tab(table): a table of possible interpolation key values
-    return (s:gsub('($%b{})', function(w) return tab[w:sub(3, -2)] or w end))
-end
 
-function foodSicknessCalculatorForLactose(item)
+function lactoseIntolerant.foodSicknessCalculatorForLactose(item)
     --- What would be a good way to simplify class layout?
     --- RealizedFoodContents work very well
-    realized_food_contents = RealizedFoodContents:new(item)
-    item_contents_decider = FoodItemContentsDecider:new(realized_food_contents, lactoseIntolerant.foodNameContainsLactose)
-    food_sickness_calculator = LactoseFoodSicknessCalculator:new(item_contents_decider)
+    local realized_food_contents = genericFoodIntolerance.RealizedFoodContents:new(item)
+    local item_contents_decider = genericFoodIntolerance.FoodItemContentsDecider:new(realized_food_contents, lactoseIntolerant.foodNameContainsLactose)
+    local food_sickness_calculator = LactoseFoodSicknessCalculator:new(item_contents_decider)
     return food_sickness_calculator
 end
 
-LactoseFoodSicknessCalculator = FoodSicknessCalculator:factory(lactoseIntolerant.calculateNewFoodSicknessCount)
+LactoseFoodSicknessCalculator = genericFoodIntolerance.FoodSicknessCalculator:factory(lactoseIntolerant.calculateNewFoodSicknessCount)

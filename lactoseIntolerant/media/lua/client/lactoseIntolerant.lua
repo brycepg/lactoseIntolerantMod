@@ -32,13 +32,15 @@ function lactoseIntolerant.eatItemHook(item, percentage, player)
             ISInventoryPaneContextMenu.eatItem = old_eatmenu
             return
         end
-        local shouldSayPhrase = SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption and lactoseIntolerant.sayPhraseChance(ZombRand)
-        eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
+        local shouldSayPhrase = (SandboxVars.lactoseIntolerant.SayPhrasesOnDairyConsumption
+            and lactoseIntolerant.sayPhraseChance(ZombRand))
+        lactoseIntolerant.eatItemWithLactoseIntoleranceTrait(item, percentage, playerObj, shouldSayPhrase)
 
 end
 
 
 function lactoseIntolerant.overrideEatItem()
+    lactoseIntolerant.DEBUG = isDebug()
     ISInventoryPaneContextMenu.eatItem = lactoseIntolerant.eatItemHook
 end
 

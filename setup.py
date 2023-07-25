@@ -34,7 +34,7 @@ DOTFILE_DIR = dirname(realpath(__file__))
 
 # Change this to configure the symlink mapping
 DOTFILE_TO_HOME = (
-    ('lactoseIntolerant', 'Zomboid/Workshop/lactoseIntrolerantTrait/Content/lactoseIntolerant'),
+    ('lactoseIntolerant', 'Zomboid/Workshop/lactoseIntrolerantTrait/Contents/mods/lactoseIntolerant'),
     ('lactoseIntolerant', 'Zomboid/mods/lactoseIntolerant'),
     ('workshop.txt', 'Zomboid/Workshop/lactoseIntrolerantTrait/workshop.txt'),
     ('description.txt', 'Zomboid/Workshop/lactoseIntrolerantTrait/description.txt'),
